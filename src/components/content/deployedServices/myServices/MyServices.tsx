@@ -36,6 +36,7 @@ import {
     DeployedServiceDetails,
     name,
     Region,
+    reviewResult,
     serviceDeploymentState,
     serviceHostingType,
     ServiceProviderContactDetails,
@@ -72,6 +73,7 @@ import { useServiceStateStartQuery } from '../../order/serviceState/start/useSer
 import StopServiceStatusAlert from '../../order/serviceState/stop/StopServiceStatusAlert';
 import { useServiceStateStopQuery } from '../../order/serviceState/stop/useServiceStateStopQuery';
 import { useOrderFormStore } from '../../order/store/OrderFormStore';
+import useApproveOrRejectRequest, { ApproveOrRejectRequestParams } from '../../review/query/useApproveOrRejectRequest';
 import { DeployedBillingMode } from '../common/DeployedBillingMode.tsx';
 import { DeployedRegion } from '../common/DeployedRegion.tsx';
 import DeployedServicesError from '../common/DeployedServicesError';
@@ -128,6 +130,7 @@ function MyServices(): React.JSX.Element {
     const navigate = useNavigate();
     const listDeployedServicesQuery = useListDeployedServicesDetailsQuery();
     const getOrderableServiceDetails = useGetOrderableServiceDetailsQuery(activeRecord?.serviceTemplateId);
+    const approveOrRejectRequest = useApproveOrRejectRequest(activeRecord?.serviceTemplateId ?? '');
 
     const getDestroyServiceStatusPollingQuery = useLatestServiceOrderStatusQuery(
         serviceDestroyQuery.data?.orderId ?? '',
@@ -784,15 +787,11 @@ function MyServices(): React.JSX.Element {
             record.serviceDeploymentState === serviceDeploymentState.DESTROY_FAILED ||
             record.serviceDeploymentState === serviceDeploymentState.MODIFICATION_SUCCESSFUL
         ) {
-            if (
-                getOrderableServiceDetails.isSuccess &&
-                getOrderableServiceDetails.data.configurationParameters &&
-                getOrderableServiceDetails.data.configurationParameters.length > 0
-            ) {
-                return true;
+            if (record.serviceConfigurationDetails) {
+                return false;
             }
         }
-        return false;
+        return true;
     };
 
     const closeDestroyResultAlert = (isClose: boolean) => {
@@ -1367,12 +1366,24 @@ function MyServices(): React.JSX.Element {
     };
 
     const handleMyServiceConfigurationOpenModal = (record: DeployedService) => {
+        approveServiceTemplate(record);
         setActiveRecord(
             record.serviceHostingType === serviceHostingType.SELF
                 ? (record as DeployedServiceDetails)
                 : (record as VendorHostedDeployedServiceDetails)
         );
         setIsMyServiceConfigurationModalOpen(true);
+    };
+
+    const approveServiceTemplate = (record: DeployedService) => {
+        const request: ApproveOrRejectRequestParams = {
+            id: record.serviceTemplateId ?? '',
+            reviewRegistrationRequest: {
+                reviewResult: reviewResult.APPROVED,
+                reviewComment: reviewResult.APPROVED.toString(),
+            },
+        };
+        approveOrRejectRequest.mutate(request);
     };
 
     const handleMyServiceConfigurationModalClose = () => {

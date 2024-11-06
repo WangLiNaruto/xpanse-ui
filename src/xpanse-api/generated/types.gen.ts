@@ -539,6 +539,7 @@ export type DeployedService = {
      */
     lastStoppedAt?: string;
     lockConfig?: ServiceLockConfig;
+    serviceConfigurationDetails?: ServiceConfigurationDetails;
 };
 
 /**
@@ -703,6 +704,7 @@ export type DeployedServiceDetails = {
      */
     lastStoppedAt?: string;
     lockConfig?: ServiceLockConfig;
+    serviceConfigurationDetails?: ServiceConfigurationDetails;
     deployRequest: DeployRequest;
     /**
      * The resource list of the deployed service.
@@ -1850,6 +1852,9 @@ export type ServiceConfigurationChangeResult = {
     tasks?: Array<AnsibleTaskResult>;
 };
 
+/**
+ * Details of the service configuration.
+ */
 export type ServiceConfigurationDetails = {
     serviceId?: string;
     configuration?: {
@@ -2715,6 +2720,7 @@ export type VendorHostedDeployedServiceDetails = {
      */
     lastStoppedAt?: string;
     lockConfig?: ServiceLockConfig;
+    serviceConfigurationDetails?: ServiceConfigurationDetails;
     deployRequest: DeployRequest;
     /**
      * The properties of the deployed service.
@@ -2924,7 +2930,7 @@ export type ChangeServiceLockConfigData = {
     serviceId: string;
 };
 
-export type ChangeServiceLockConfigResponse = void;
+export type ChangeServiceLockConfigResponse = ServiceOrder;
 
 export type DetailsData = {
     /**

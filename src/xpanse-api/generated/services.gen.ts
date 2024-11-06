@@ -546,7 +546,7 @@ export const changeServiceConfiguration = (
  * @param data The data for the request.
  * @param data.serviceId Id of the service
  * @param data.requestBody
- * @returns void No Content
+ * @returns ServiceOrder OK
  * @throws ApiError
  */
 export const changeServiceLockConfig = (
