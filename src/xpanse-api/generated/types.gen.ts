@@ -1381,7 +1381,7 @@ export type OrderFailedResponse = {
         | 'Service Template Already Registered'
         | 'Icon Processing Failed'
         | 'Service Template Not Registered'
-        | 'Service Template Not Approved'
+        | 'Service Template Is Unavailable'
         | 'Service Template Already Reviewed'
         | 'Invalid Service Version'
         | 'Invalid Service Flavors'
@@ -1422,7 +1422,8 @@ export type OrderFailedResponse = {
         | 'Service Configuration Invalid'
         | 'Service Configuration Update Request Not Found'
         | 'Service Configuration Not Found'
-        | 'Invalid Deployer Tool';
+        | 'Invalid Deployer Tool'
+        | 'Deployment Scripts Creation Failed';
     /**
      * Details of the errors occurred
      */
@@ -1466,7 +1467,7 @@ export enum resultType {
     SERVICE_TEMPLATE_ALREADY_REGISTERED = 'Service Template Already Registered',
     ICON_PROCESSING_FAILED = 'Icon Processing Failed',
     SERVICE_TEMPLATE_NOT_REGISTERED = 'Service Template Not Registered',
-    SERVICE_TEMPLATE_NOT_APPROVED = 'Service Template Not Approved',
+    SERVICE_TEMPLATE_IS_UNAVAILABLE = 'Service Template Is Unavailable',
     SERVICE_TEMPLATE_ALREADY_REVIEWED = 'Service Template Already Reviewed',
     INVALID_SERVICE_VERSION = 'Invalid Service Version',
     INVALID_SERVICE_FLAVORS = 'Invalid Service Flavors',
@@ -1508,6 +1509,7 @@ export enum resultType {
     SERVICE_CONFIGURATION_UPDATE_REQUEST_NOT_FOUND = 'Service Configuration Update Request Not Found',
     SERVICE_CONFIGURATION_NOT_FOUND = 'Service Configuration Not Found',
     INVALID_DEPLOYER_TOOL = 'Invalid Deployer Tool',
+    DEPLOYMENT_SCRIPTS_CREATION_FAILED = 'Deployment Scripts Creation Failed',
 }
 
 /**
@@ -1670,7 +1672,7 @@ export type Response = {
         | 'Service Template Already Registered'
         | 'Icon Processing Failed'
         | 'Service Template Not Registered'
-        | 'Service Template Not Approved'
+        | 'Service Template Is Unavailable'
         | 'Service Template Already Reviewed'
         | 'Invalid Service Version'
         | 'Invalid Service Flavors'
@@ -1711,7 +1713,8 @@ export type Response = {
         | 'Service Configuration Invalid'
         | 'Service Configuration Update Request Not Found'
         | 'Service Configuration Not Found'
-        | 'Invalid Deployer Tool';
+        | 'Invalid Deployer Tool'
+        | 'Deployment Scripts Creation Failed';
     /**
      * Details of the errors occurred
      */
@@ -2036,6 +2039,7 @@ export type ServiceOrderDetails = {
         | 'modify'
         | 'destroy'
         | 'migrate'
+        | 'recreate'
         | 'lockChange'
         | 'configChange'
         | 'purge'
@@ -2110,6 +2114,7 @@ export enum taskType {
     MODIFY = 'modify',
     DESTROY = 'destroy',
     MIGRATE = 'migrate',
+    RECREATE = 'recreate',
     LOCK_CHANGE = 'lockChange',
     CONFIG_CHANGE = 'configChange',
     PURGE = 'purge',
@@ -2230,53 +2235,6 @@ export type ServiceProviderContactDetails = {
     websites?: Array<string>;
 };
 
-export type ServiceRecreateDetails = {
-    /**
-     * The ID of the service recreate
-     */
-    recreateId: string;
-    /**
-     * The ID of the old service
-     */
-    serviceId: string;
-    /**
-     * The status of the service recreate
-     */
-    recreateStatus:
-        | 'RecreateStarted'
-        | 'RecreateCompleted'
-        | 'RecreateFailed'
-        | 'DestroyStarted'
-        | 'DestroyFailed'
-        | 'DestroyCompleted'
-        | 'DeployStarted'
-        | 'DeployFailed'
-        | 'DeployCompleted';
-    /**
-     * Time of service recreate.
-     */
-    createTime: string;
-    /**
-     * Time of update service recreate.
-     */
-    lastModifiedTime: string;
-};
-
-/**
- * The status of the service recreate
- */
-export enum recreateStatus {
-    RECREATE_STARTED = 'RecreateStarted',
-    RECREATE_COMPLETED = 'RecreateCompleted',
-    RECREATE_FAILED = 'RecreateFailed',
-    DESTROY_STARTED = 'DestroyStarted',
-    DESTROY_FAILED = 'DestroyFailed',
-    DESTROY_COMPLETED = 'DestroyCompleted',
-    DEPLOY_STARTED = 'DeployStarted',
-    DEPLOY_FAILED = 'DeployFailed',
-    DEPLOY_COMPLETED = 'DeployCompleted',
-}
-
 export type ServiceTemplateDetailVo = {
     /**
      * ID of the registered service.
@@ -2355,7 +2313,15 @@ export type ServiceTemplateDetailVo = {
     /**
      * State of registered service template.
      */
-    serviceRegistrationState: 'unregistered' | 'approval pending' | 'approved' | 'rejected';
+    serviceTemplateRegistrationState: 'inProgress' | 'approved' | 'rejected';
+    /**
+     * Is service template in updating.
+     */
+    isUpdatePending: boolean;
+    /**
+     * Is available in catalog.
+     */
+    availableInCatalog: boolean;
     /**
      * Comment of reviewed service template.
      */
@@ -2372,9 +2338,8 @@ export type ServiceTemplateDetailVo = {
 /**
  * State of registered service template.
  */
-export enum serviceRegistrationState {
-    UNREGISTERED = 'unregistered',
-    APPROVAL_PENDING = 'approval pending',
+export enum serviceTemplateRegistrationState {
+    IN_PROGRESS = 'inProgress',
     APPROVED = 'approved',
     REJECTED = 'rejected',
 }
@@ -2850,7 +2815,7 @@ export type RecreateServiceData = {
     serviceId: string;
 };
 
-export type RecreateServiceResponse = string;
+export type RecreateServiceResponse = ServiceOrder;
 
 export type ModifyData = {
     requestBody: ModifyRequest;
@@ -3144,6 +3109,10 @@ export type MigrateResponse = ServiceOrder;
 
 export type ListServiceTemplatesData = {
     /**
+     * is available in catalog
+     */
+    availableInCatalog?: boolean;
+    /**
      * category of the service
      */
     categoryName?:
@@ -3171,6 +3140,10 @@ export type ListServiceTemplatesData = {
         | 'azure'
         | 'GoogleCloudPlatform';
     /**
+     * is service template updating
+     */
+    isUpdatePending?: boolean;
+    /**
      * who hosts ths cloud resources
      */
     serviceHostingType?: 'self' | 'service-vendor';
@@ -3179,9 +3152,9 @@ export type ListServiceTemplatesData = {
      */
     serviceName?: string;
     /**
-     * state of registration
+     * state of service template registration
      */
-    serviceRegistrationState?: 'unregistered' | 'approval pending' | 'approved' | 'rejected';
+    serviceTemplateRegistrationState?: 'inProgress' | 'approved' | 'rejected';
     /**
      * version of the service
      */
@@ -3285,6 +3258,7 @@ export type GetAllOrdersByServiceIdData = {
         | 'modify'
         | 'destroy'
         | 'migrate'
+        | 'recreate'
         | 'lockChange'
         | 'configChange'
         | 'purge'
@@ -3327,41 +3301,6 @@ export type GetLatestServiceDeploymentStatusData = {
 };
 
 export type GetLatestServiceDeploymentStatusResponse = DeploymentStatusUpdate;
-
-export type ListServiceRecreatesData = {
-    /**
-     * Id of the service recreate
-     */
-    recreateId?: string;
-    /**
-     * Status of the service recreate
-     */
-    recreateStatus?:
-        | 'RecreateStarted'
-        | 'RecreateCompleted'
-        | 'RecreateFailed'
-        | 'DestroyStarted'
-        | 'DestroyFailed'
-        | 'DestroyCompleted'
-        | 'DeployStarted'
-        | 'DeployFailed'
-        | 'DeployCompleted';
-    /**
-     * Id of the old service
-     */
-    serviceId?: string;
-};
-
-export type ListServiceRecreatesResponse = Array<ServiceRecreateDetails>;
-
-export type GetRecreateOrderDetailsByIdData = {
-    /**
-     * Recreate ID
-     */
-    recreateId: string;
-};
-
-export type GetRecreateOrderDetailsByIdResponse = ServiceRecreateDetails;
 
 export type GetOrderDetailsByOrderIdData = {
     /**
@@ -3678,6 +3617,10 @@ export type GetActiveCspsResponse = Array<
 
 export type ListManagedServiceTemplatesData = {
     /**
+     * is available in catalog
+     */
+    availableInCatalog?: boolean;
+    /**
      * category of the service
      */
     categoryName?:
@@ -3692,6 +3635,10 @@ export type ListManagedServiceTemplatesData = {
         | 'middleware'
         | 'others';
     /**
+     * is service template updating
+     */
+    isUpdatePending?: boolean;
+    /**
      * who hosts ths cloud resources
      */
     serviceHostingType?: 'self' | 'service-vendor';
@@ -3700,9 +3647,9 @@ export type ListManagedServiceTemplatesData = {
      */
     serviceName?: string;
     /**
-     * state of registration
+     * state of service template registration
      */
-    serviceRegistrationState?: 'unregistered' | 'approval pending' | 'approved' | 'rejected';
+    serviceTemplateRegistrationState?: 'inProgress' | 'approved' | 'rejected';
     /**
      * version of the service
      */
@@ -3860,7 +3807,7 @@ export type GetCredentialTypesData = {
 
 export type GetCredentialTypesResponse = Array<'variables' | 'http_authentication' | 'api_key' | 'oauth2'>;
 
-export type ListOrderableServicesData = {
+export type GetOrderableServicesData = {
     /**
      * category of the service
      */
@@ -3902,7 +3849,7 @@ export type ListOrderableServicesData = {
     serviceVersion?: string;
 };
 
-export type ListOrderableServicesResponse = Array<UserOrderableServiceVo>;
+export type GetOrderableServicesResponse = Array<UserOrderableServiceVo>;
 
 export type GetOrderableServiceDetailsData = {
     /**

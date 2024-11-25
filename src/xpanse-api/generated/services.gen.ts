@@ -79,6 +79,8 @@ import type {
     GetMetricsResponse,
     GetOrderableServiceDetailsData,
     GetOrderableServiceDetailsResponse,
+    GetOrderableServicesData,
+    GetOrderableServicesResponse,
     GetOrderDetailsByOrderIdData,
     GetOrderDetailsByOrderIdResponse,
     GetPendingConfigurationChangeRequestData,
@@ -87,8 +89,6 @@ import type {
     GetPolicyDetailsResponse,
     GetPricesByServiceData,
     GetPricesByServiceResponse,
-    GetRecreateOrderDetailsByIdData,
-    GetRecreateOrderDetailsByIdResponse,
     GetRegistrationDetailsData,
     GetRegistrationDetailsResponse,
     GetSelfHostedServiceDetailsByIdData,
@@ -114,12 +114,8 @@ import type {
     ListDeployedServicesResponse,
     ListManagedServiceTemplatesData,
     ListManagedServiceTemplatesResponse,
-    ListOrderableServicesData,
-    ListOrderableServicesResponse,
     ListServicePoliciesData,
     ListServicePoliciesResponse,
-    ListServiceRecreatesData,
-    ListServiceRecreatesResponse,
     ListServiceTemplatesData,
     ListServiceTemplatesResponse,
     ListUserPoliciesData,
@@ -427,7 +423,7 @@ export const restartService = (data: RestartServiceData): CancelablePromise<Rest
  * Create a job to recreate the deployed service.<br> Required role: <b>admin</b> or <b>user</b> </br>
  * @param data The data for the request.
  * @param data.serviceId
- * @returns string Accepted
+ * @returns ServiceOrder Accepted
  * @throws ApiError
  */
 export const recreateService = (data: RecreateServiceData): CancelablePromise<RecreateServiceResponse> => {
@@ -1171,7 +1167,9 @@ export const migrate = (data: MigrateData): CancelablePromise<MigrateResponse> =
  * @param data.serviceName name of the service
  * @param data.serviceVersion version of the service
  * @param data.serviceHostingType who hosts ths cloud resources
- * @param data.serviceRegistrationState state of registration
+ * @param data.serviceTemplateRegistrationState state of service template registration
+ * @param data.availableInCatalog is available in catalog
+ * @param data.isUpdatePending is service template updating
  * @returns ServiceTemplateDetailVo OK
  * @throws ApiError
  */
@@ -1187,7 +1185,9 @@ export const listServiceTemplates = (
             serviceName: data.serviceName,
             serviceVersion: data.serviceVersion,
             serviceHostingType: data.serviceHostingType,
-            serviceRegistrationState: data.serviceRegistrationState,
+            serviceTemplateRegistrationState: data.serviceTemplateRegistrationState,
+            availableInCatalog: data.availableInCatalog,
+            isUpdatePending: data.isUpdatePending,
         },
         errors: {
             400: 'Bad Request',
@@ -1491,66 +1491,6 @@ export const getLatestServiceDeploymentStatus = (
         },
         query: {
             lastKnownServiceDeploymentState: data.lastKnownServiceDeploymentState,
-        },
-        errors: {
-            400: 'Bad Request',
-            401: 'Unauthorized',
-            403: 'Forbidden',
-            408: 'Request Timeout',
-            422: 'Unprocessable Entity',
-            500: 'Internal Server Error',
-            502: 'Bad Gateway',
-        },
-    });
-};
-
-/**
- * List all services recreate by a user.<br> Required role: <b>admin</b> or <b>user</b> </br>
- * @param data The data for the request.
- * @param data.recreateId Id of the service recreate
- * @param data.serviceId Id of the old service
- * @param data.recreateStatus Status of the service recreate
- * @returns ServiceRecreateDetails OK
- * @throws ApiError
- */
-export const listServiceRecreates = (
-    data: ListServiceRecreatesData = {}
-): CancelablePromise<ListServiceRecreatesResponse> => {
-    return __request(OpenAPI, {
-        method: 'GET',
-        url: '/xpanse/services/recreate',
-        query: {
-            recreateId: data.recreateId,
-            serviceId: data.serviceId,
-            recreateStatus: data.recreateStatus,
-        },
-        errors: {
-            400: 'Bad Request',
-            401: 'Unauthorized',
-            403: 'Forbidden',
-            408: 'Request Timeout',
-            422: 'Unprocessable Entity',
-            500: 'Internal Server Error',
-            502: 'Bad Gateway',
-        },
-    });
-};
-
-/**
- * Get recreate records based on recreate id.<br> Required role: <b>admin</b> or <b>user</b> </br>
- * @param data The data for the request.
- * @param data.recreateId Recreate ID
- * @returns ServiceRecreateDetails OK
- * @throws ApiError
- */
-export const getRecreateOrderDetailsById = (
-    data: GetRecreateOrderDetailsByIdData
-): CancelablePromise<GetRecreateOrderDetailsByIdResponse> => {
-    return __request(OpenAPI, {
-        method: 'GET',
-        url: '/xpanse/services/recreate/{recreateId}',
-        path: {
-            recreateId: data.recreateId,
         },
         errors: {
             400: 'Bad Request',
@@ -2053,7 +1993,9 @@ export const getActiveCsps = (): CancelablePromise<GetActiveCspsResponse> => {
  * @param data.serviceName name of the service
  * @param data.serviceVersion version of the service
  * @param data.serviceHostingType who hosts ths cloud resources
- * @param data.serviceRegistrationState state of registration
+ * @param data.serviceTemplateRegistrationState state of service template registration
+ * @param data.availableInCatalog is available in catalog
+ * @param data.isUpdatePending is service template updating
  * @returns ServiceTemplateDetailVo OK
  * @throws ApiError
  */
@@ -2068,7 +2010,9 @@ export const listManagedServiceTemplates = (
             serviceName: data.serviceName,
             serviceVersion: data.serviceVersion,
             serviceHostingType: data.serviceHostingType,
-            serviceRegistrationState: data.serviceRegistrationState,
+            serviceTemplateRegistrationState: data.serviceTemplateRegistrationState,
+            availableInCatalog: data.availableInCatalog,
+            isUpdatePending: data.isUpdatePending,
         },
         errors: {
             400: 'Bad Request',
@@ -2283,9 +2227,9 @@ export const getCredentialTypes = (
  * @returns UserOrderableServiceVo OK
  * @throws ApiError
  */
-export const listOrderableServices = (
-    data: ListOrderableServicesData = {}
-): CancelablePromise<ListOrderableServicesResponse> => {
+export const getOrderableServices = (
+    data: GetOrderableServicesData = {}
+): CancelablePromise<GetOrderableServicesResponse> => {
     return __request(OpenAPI, {
         method: 'GET',
         url: '/xpanse/catalog/services',
