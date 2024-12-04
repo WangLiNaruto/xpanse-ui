@@ -13,14 +13,17 @@ import catalogStyles from '../../../../../styles/catalog.module.css';
 import registerStyles from '../../../../../styles/register.module.css';
 import {
     ApiError,
-    Ocl,
-    Response,
-    ServiceTemplateDetailVo,
     category,
+    details,
+    DetailsData,
+    ErrorResponse,
+    Ocl,
+    ServiceTemplateChangeInfo,
     serviceTemplateRegistrationState,
     update,
     type UpdateData,
 } from '../../../../../xpanse-api/generated';
+import { isErrorResponse } from '../../../common/error/isErrorResponse';
 import OclSummaryDisplay from '../../../common/ocl/OclSummaryDisplay';
 import { ValidationStatus } from '../../../common/ocl/ValidationStatus';
 import YamlSyntaxValidationResult from '../../../common/ocl/YamlSyntaxValidationResult';
@@ -43,7 +46,7 @@ function UpdateService({
     const oclDisplayData = useRef<React.JSX.Element>(<></>);
     const updateResult = useRef<string[]>([]);
     const serviceRegistrationStatus = useRef<serviceTemplateRegistrationState>(
-        serviceTemplateRegistrationState.IN_PROGRESS
+        serviceTemplateRegistrationState.IN_REVIEW
     );
     const [yamlSyntaxValidationStatus, setYamlSyntaxValidationStatus] = useState<ValidationStatus>('notStarted');
     const [oclValidationStatus, setOclValidationStatus] = useState<ValidationStatus>('notStarted');
@@ -53,20 +56,25 @@ function UpdateService({
         mutationFn: (ocl: Ocl) => {
             const data: UpdateData = {
                 id: id,
+                isRemoveServiceTemplateUntilApproved: true,
                 requestBody: ocl,
             };
             return update(data);
         },
-        onSuccess: (serviceTemplateVo: ServiceTemplateDetailVo) => {
+        onSuccess: async (serviceTemplateChangeInfo: ServiceTemplateChangeInfo) => {
             files.current[0].status = 'done';
-            updateResult.current = [`ID - ${serviceTemplateVo.serviceTemplateId}`];
+            updateResult.current = [`ID - ${serviceTemplateChangeInfo.serviceTemplateId}`];
+            const detailsData: DetailsData = {
+                id: serviceTemplateChangeInfo.serviceTemplateId,
+            };
+            const serviceTemplateDetailsVo = await details(detailsData);
             serviceRegistrationStatus.current =
-                serviceTemplateVo.serviceTemplateRegistrationState as serviceTemplateRegistrationState;
+                serviceTemplateDetailsVo.serviceTemplateRegistrationState as serviceTemplateRegistrationState;
         },
         onError: (error: Error) => {
             files.current[0].status = 'error';
-            if (error instanceof ApiError && error.body && typeof error.body === 'object' && 'details' in error.body) {
-                const response: Response = error.body as Response;
+            if (error instanceof ApiError && error.body && isErrorResponse(error.body)) {
+                const response: ErrorResponse = error.body;
                 updateResult.current = response.details;
             } else {
                 updateResult.current = [error.message];

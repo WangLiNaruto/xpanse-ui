@@ -13,13 +13,15 @@ import appStyles from '../../../styles/app.module.css';
 import registerStyles from '../../../styles/register.module.css';
 import {
     ApiError,
-    Ocl,
-    Response,
-    ServiceTemplateDetailVo,
     category,
+    details,
+    DetailsData,
+    ErrorResponse,
+    Ocl,
     register,
-    serviceTemplateRegistrationState,
     type RegisterData,
+    ServiceTemplateChangeInfo,
+    serviceTemplateRegistrationState,
 } from '../../../xpanse-api/generated';
 import {
     registerFailedRoute,
@@ -28,6 +30,7 @@ import {
     registerSuccessfulRoute,
 } from '../../utils/constants';
 import { getQueryKey } from '../catalog/services/query/useAvailableServiceTemplatesQuery';
+import { isErrorResponse } from '../common/error/isErrorResponse';
 import OclSummaryDisplay from '../common/ocl/OclSummaryDisplay';
 import { ValidationStatus } from '../common/ocl/ValidationStatus';
 import YamlSyntaxValidationResult from '../common/ocl/YamlSyntaxValidationResult';
@@ -41,7 +44,7 @@ function RegisterPanel(): React.JSX.Element {
     const oclDisplayData = useRef<React.JSX.Element>(<></>);
     const registerResult = useRef<string[]>([]);
     const serviceRegistrationStatus = useRef<serviceTemplateRegistrationState>(
-        serviceTemplateRegistrationState.IN_PROGRESS
+        serviceTemplateRegistrationState.IN_REVIEW
     );
     const [yamlSyntaxValidationStatus, setYamlSyntaxValidationStatus] = useState<ValidationStatus>('notStarted');
     const [oclValidationStatus, setOclValidationStatus] = useState<ValidationStatus>('notStarted');
@@ -56,23 +59,27 @@ function RegisterPanel(): React.JSX.Element {
             };
             return register(data);
         },
-        onSuccess: (serviceTemplateVo: ServiceTemplateDetailVo) => {
+        onSuccess: async (serviceTemplateChangeInfo: ServiceTemplateChangeInfo) => {
             files.current[0].status = 'done';
-            registerResult.current = [`ID - ${serviceTemplateVo.serviceTemplateId}`];
+            registerResult.current = [`ID - ${serviceTemplateChangeInfo.serviceTemplateId}`];
+            const detailsData: DetailsData = {
+                id: serviceTemplateChangeInfo.serviceTemplateId,
+            };
+            const serviceTemplateDetailsVo = await details(detailsData);
             serviceRegistrationStatus.current =
-                serviceTemplateVo.serviceTemplateRegistrationState as serviceTemplateRegistrationState;
-            void queryClient.refetchQueries({ queryKey: getQueryKey(serviceTemplateVo.category as category) });
-            navigate(registerSuccessfulRoute.concat(`?id=${serviceTemplateVo.serviceTemplateId}`));
+                serviceTemplateDetailsVo.serviceTemplateRegistrationState as serviceTemplateRegistrationState;
+            void queryClient.refetchQueries({ queryKey: getQueryKey(serviceTemplateDetailsVo.category as category) });
+            void navigate(registerSuccessfulRoute.concat(`?id=${serviceTemplateDetailsVo.serviceTemplateId}`));
         },
         onError: (error: Error) => {
             files.current[0].status = 'error';
-            if (error instanceof ApiError && error.body && typeof error.body === 'object' && 'details' in error.body) {
-                const response: Response = error.body as Response;
+            if (error instanceof ApiError && error.body && isErrorResponse(error.body)) {
+                const response: ErrorResponse = error.body;
                 registerResult.current = response.details;
             } else {
                 registerResult.current = [error.message];
             }
-            navigate(registerFailedRoute);
+            void navigate(registerFailedRoute);
         },
     });
 
@@ -87,7 +94,7 @@ function RegisterPanel(): React.JSX.Element {
     // useEffect to route to /register URI when a user reloads the failed URI. Hence, this must be run only during component's first render.
     useEffect(() => {
         if (location.pathname.includes(registerFailedRoute) || location.pathname.includes(registerSuccessfulRoute)) {
-            navigate(registerPageRoute);
+            void navigate(registerPageRoute);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -116,7 +123,7 @@ function RegisterPanel(): React.JSX.Element {
                         } else {
                             yamlValidationResult.current = 'unhandled error occurred';
                         }
-                        navigate(registerInvalidRoute);
+                        void navigate(registerInvalidRoute);
                     }
                 }
             };
@@ -147,7 +154,7 @@ function RegisterPanel(): React.JSX.Element {
         setOclValidationStatus('notStarted');
         oclDisplayData.current = <></>;
         registerRequest.reset();
-        navigate(registerPageRoute);
+        void navigate(registerPageRoute);
     };
 
     const retryRequest = () => {

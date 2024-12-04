@@ -45,7 +45,8 @@ export function EndUserServicesDashboard(): React.JSX.Element {
             }
             if (
                 serviceItem.serviceDeploymentState === serviceDeploymentState.DEPLOYMENT_FAILED ||
-                serviceItem.serviceDeploymentState === serviceDeploymentState.MODIFICATION_FAILED
+                serviceItem.serviceDeploymentState === serviceDeploymentState.MODIFICATION_FAILED ||
+                serviceItem.serviceDeploymentState === serviceDeploymentState.ROLLBACK_FAILED
             ) {
                 failedDeploymentsCount++;
             }
@@ -59,7 +60,7 @@ export function EndUserServicesDashboard(): React.JSX.Element {
     }
 
     const getMyServicesRedirectionUrl = (serviceState: serviceDeploymentState[]) => {
-        navigate({
+        void navigate({
             pathname: myServicesRoute,
             search: createSearchParams({
                 serviceState: serviceState,
@@ -95,6 +96,7 @@ export function EndUserServicesDashboard(): React.JSX.Element {
                                 getMyServicesRedirectionUrl([
                                     serviceDeploymentState.DEPLOYMENT_FAILED,
                                     serviceDeploymentState.MODIFICATION_FAILED,
+                                    serviceDeploymentState.ROLLBACK_FAILED,
                                 ]);
                             }}
                         >

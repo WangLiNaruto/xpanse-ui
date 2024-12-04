@@ -13,10 +13,38 @@ updates:
           interval: weekly
       open-pull-requests-limit: 20
       groups:
-          dev-dependencies:
+          typescript-eslint:
               applies-to: version-updates
               patterns:
                   - '@typescript-eslint/*'
+                  - 'typescript-eslint'
+          eslint:
+              applies-to: version-updates
+              patterns:
+                  - 'eslint'
+                  - '@eslint/js'
+          playwright:
+              applies-to: version-updates
+              patterns:
+                  - '*playwright/*'
+          axa-oidc:
+              applies-to: version-updates
+              patterns:
+                  - '@axa-fr/*'
+          tanstack-query:
+              applies-to: version-updates
+              patterns:
+                  - '@tanstack/*'
+          antd:
+              applies-to: version-updates
+              patterns:
+                  - '@ant-design/icons'
+                  - 'antd'
+          vite:
+              applies-to: version-updates
+              patterns:
+                  - 'vite'
+                  - '@vitejs/plugin-react'
     - package-ecosystem: docker
       directory: /docker
       schedule:

@@ -3,53 +3,74 @@
  * SPDX-FileCopyrightText: Huawei Inc.
  */
 
+import { UseMutationResult } from '@tanstack/react-query';
 import { Alert } from 'antd';
 import React from 'react';
 import submitAlertStyles from '../../../../styles/submit-alert.module.css';
 import {
     ApiError,
     DeployedService,
-    Response,
+    ErrorResponse,
     serviceDeploymentState,
+    ServiceOrder,
     ServiceOrderStatusUpdate,
     taskStatus,
 } from '../../../../xpanse-api/generated';
+import { isErrorResponse } from '../../common/error/isErrorResponse';
 import { ContactDetailsShowType } from '../../common/ocl/ContactDetailsShowType';
 import { ContactDetailsText } from '../../common/ocl/ContactDetailsText';
+import { useServiceDetailsByServiceIdQuery } from '../../common/queries/useServiceDetailsByServiceIdQuery.ts';
 import useGetOrderableServiceDetailsQuery from '../../deployedServices/myServices/query/useGetOrderableServiceDetailsQuery';
 import OrderSubmitResultDetails from '../orderStatus/OrderSubmitResultDetails';
 
 function DestroyServiceStatusAlert({
     deployedService,
-    destroySubmitError,
+    destroySubmitRequest,
     serviceStateDestroyQueryError,
     serviceStateDestroyQueryData,
     closeDestroyResultAlert,
 }: {
     deployedService: DeployedService;
-    destroySubmitError: Error | null;
+    destroySubmitRequest: UseMutationResult<ServiceOrder, Error, string>;
     serviceStateDestroyQueryError: Error | null;
     serviceStateDestroyQueryData: ServiceOrderStatusUpdate | undefined;
     closeDestroyResultAlert: (arg: boolean) => void;
 }): React.JSX.Element {
     const getOrderableServiceDetails = useGetOrderableServiceDetailsQuery(deployedService.serviceTemplateId);
 
+    const getRecreateDeployServiceDetailsQuery = useServiceDetailsByServiceIdQuery(
+        destroySubmitRequest.data?.serviceId ?? '',
+        deployedService.serviceHostingType,
+        serviceStateDestroyQueryData?.taskStatus
+    );
+
+    if (
+        serviceStateDestroyQueryData?.isOrderCompleted &&
+        getRecreateDeployServiceDetailsQuery.isSuccess &&
+        [
+            serviceDeploymentState.DESTROY_FAILED.toString(),
+            serviceDeploymentState.DESTROY_SUCCESSFUL.toString(),
+        ].includes(getRecreateDeployServiceDetailsQuery.data.serviceDeploymentState)
+    ) {
+        deployedService.serviceDeploymentState = getRecreateDeployServiceDetailsQuery.data.serviceDeploymentState;
+        deployedService.serviceState = getRecreateDeployServiceDetailsQuery.data.serviceState;
+    }
+
     const onClose = () => {
         closeDestroyResultAlert(true);
     };
 
-    if (destroySubmitError) {
+    if (destroySubmitRequest.isError) {
         let errorMessage;
         if (
-            destroySubmitError instanceof ApiError &&
-            destroySubmitError.body &&
-            typeof destroySubmitError.body === 'object' &&
-            'details' in destroySubmitError.body
+            destroySubmitRequest.error instanceof ApiError &&
+            destroySubmitRequest.error.body &&
+            isErrorResponse(destroySubmitRequest.error.body)
         ) {
-            const response: Response = destroySubmitError.body as Response;
+            const response: ErrorResponse = destroySubmitRequest.error.body;
             errorMessage = response.details;
         } else {
-            errorMessage = destroySubmitError.message;
+            errorMessage = destroySubmitRequest.error.message;
         }
         deployedService.serviceDeploymentState = serviceDeploymentState.DESTROY_FAILED;
         return (
@@ -88,10 +109,9 @@ function DestroyServiceStatusAlert({
         if (
             serviceStateDestroyQueryError instanceof ApiError &&
             serviceStateDestroyQueryError.body &&
-            typeof serviceStateDestroyQueryError.body === 'object' &&
-            'details' in serviceStateDestroyQueryError.body
+            isErrorResponse(serviceStateDestroyQueryError.body)
         ) {
-            const response: Response = serviceStateDestroyQueryError.body as Response;
+            const response: ErrorResponse = serviceStateDestroyQueryError.body;
             return (
                 <div className={submitAlertStyles.submitAlertTip}>
                     {' '}

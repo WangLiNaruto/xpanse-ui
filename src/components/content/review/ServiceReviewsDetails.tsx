@@ -59,7 +59,7 @@ export const ServiceReviewsDetails = ({
                     disabled={
                         approveOrRejectRequest.isSuccess ||
                         currentServiceTemplateVo.serviceTemplateRegistrationState !==
-                            serviceTemplateRegistrationState.IN_PROGRESS
+                            serviceTemplateRegistrationState.IN_REVIEW
                     }
                 >
                     Approve
@@ -71,7 +71,7 @@ export const ServiceReviewsDetails = ({
                     disabled={
                         approveOrRejectRequest.isSuccess ||
                         currentServiceTemplateVo.serviceTemplateRegistrationState !==
-                            serviceTemplateRegistrationState.IN_PROGRESS
+                            serviceTemplateRegistrationState.IN_REVIEW
                     }
                 >
                     Reject
@@ -199,7 +199,7 @@ export const ServiceReviewsDetails = ({
                         />
                     ) : null}
                     {currentServiceTemplateVo.serviceTemplateRegistrationState !==
-                    serviceTemplateRegistrationState.IN_PROGRESS ? (
+                    serviceTemplateRegistrationState.IN_REVIEW ? (
                         <>
                             <h3 className={catalogStyles.catalogDetailsH3}>
                                 <BarsOutlined />
@@ -208,9 +208,6 @@ export const ServiceReviewsDetails = ({
                             <Descriptions column={1} bordered className={oclDisplayStyles.oclDataInfoTable}>
                                 <Descriptions.Item label='Registration Status'>
                                     {currentServiceTemplateVo.serviceTemplateRegistrationState.valueOf()}
-                                </Descriptions.Item>
-                                <Descriptions.Item label='Comments'>
-                                    {currentServiceTemplateVo.reviewComment}
                                 </Descriptions.Item>
                             </Descriptions>
                         </>
