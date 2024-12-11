@@ -2066,10 +2066,7 @@ export type ServiceOrderDetails = {
      * The id of the workflow.
      */
     workflowId?: string;
-    /**
-     * The error message if the service order task failed.
-     */
-    errorMsg?: string;
+    errorResponse?: ErrorResponse;
     /**
      * The id of the user who created the service order.
      */
@@ -3246,6 +3243,15 @@ export type QueryTasksData = {
 
 export type QueryTasksResponse = Array<WorkFlowTask>;
 
+export type GetOrderableServiceDetailsByServiceIdData = {
+    /**
+     * The id of deployed service.
+     */
+    serviceId: string;
+};
+
+export type GetOrderableServiceDetailsByServiceIdResponse = UserOrderableServiceVo;
+
 export type GetComputeResourceInventoryOfServiceData = {
     /**
      * Id of the deployed service
@@ -3749,6 +3755,10 @@ export type GetAvailabilityZonesData = {
      * Id of the deployed service
      */
     serviceId?: string;
+    /**
+     * Id of the serviceTemplate
+     */
+    serviceTemplateId?: string;
     /**
      * site of the region belongs to
      */

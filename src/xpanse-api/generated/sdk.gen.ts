@@ -81,6 +81,8 @@ import type {
     GetMetricsResponse,
     GetOrderableServiceDetailsByIdData,
     GetOrderableServiceDetailsByIdResponse,
+    GetOrderableServiceDetailsByServiceIdData,
+    GetOrderableServiceDetailsByServiceIdResponse,
     GetOrderableServicesData,
     GetOrderableServicesResponse,
     GetOrderDetailsByOrderIdData,
@@ -1389,6 +1391,34 @@ export const queryTasks = (data: QueryTasksData = {}): CancelablePromise<QueryTa
 };
 
 /**
+ * Get service template details by service id.<br> Required role: <b>admin</b> or <b>isv</b> or <b>user</b> </br>
+ * @param data The data for the request.
+ * @param data.serviceId The id of deployed service.
+ * @returns UserOrderableServiceVo OK
+ * @throws ApiError
+ */
+export const getOrderableServiceDetailsByServiceId = (
+    data: GetOrderableServiceDetailsByServiceIdData
+): CancelablePromise<GetOrderableServiceDetailsByServiceIdResponse> => {
+    return __request(OpenAPI, {
+        method: 'GET',
+        url: '/xpanse/services/{serviceId}/service_template',
+        path: {
+            serviceId: data.serviceId,
+        },
+        errors: {
+            400: 'Bad Request',
+            401: 'Unauthorized',
+            403: 'Forbidden',
+            408: 'Request Timeout',
+            422: 'Unprocessable Entity',
+            500: 'Internal Server Error',
+            502: 'Bad Gateway',
+        },
+    });
+};
+
+/**
  * List compute resources of the service.<br> Required role: <b>admin</b> or <b>user</b> </br>
  * @param data The data for the request.
  * @param data.serviceId Id of the deployed service
@@ -2104,6 +2134,7 @@ export const getExistingResourceNamesWithKind = (
  * @param data.cspName name of the cloud service provider
  * @param data.siteName site of the region belongs to
  * @param data.regionName name of the region
+ * @param data.serviceTemplateId Id of the serviceTemplate
  * @param data.serviceId Id of the deployed service
  * @returns string OK
  * @throws ApiError
@@ -2118,6 +2149,7 @@ export const getAvailabilityZones = (
             cspName: data.cspName,
             siteName: data.siteName,
             regionName: data.regionName,
+            serviceTemplateId: data.serviceTemplateId,
             serviceId: data.serviceId,
         },
         errors: {
