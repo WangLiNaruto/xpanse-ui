@@ -317,21 +317,6 @@ export enum name {
     GOOGLE_CLOUD_PLATFORM = 'GoogleCloudPlatform',
 }
 
-/**
- * The collection of the configuration manage script.
- */
-export type ConfigManageScript = {
-    /**
-     * should be the name of the resource available in the deployer script.
-     */
-    configManager: string;
-    /**
-     * Means should the configuration update run on each node of the specific component or just one.
-     */
-    runOnlyOnce: boolean;
-    ansibleScriptConfig: AnsibleScriptConfig;
-};
-
 export type CreateCredential = {
     /**
      * The name of the credential
@@ -1076,20 +1061,20 @@ export type ErrorResponse = {
         | 'Invalid Service State'
         | 'Resource Invalid For Monitoring'
         | 'Unhandled Exception'
-        | 'Service Template Already Registered'
         | 'Icon Processing Failed'
         | 'Service Template Not Registered'
         | 'Service Template Disabled'
-        | 'Service Template Already Reviewed'
+        | 'Service Template Request Not Allowed'
+        | 'Service Template Request Not Found'
+        | 'Review Service Template Request Not Allowed'
         | 'Invalid Service Version'
         | 'Invalid Service Flavors'
+        | 'Mandatory Value Missing'
         | 'Invalid Billing Config'
         | 'Unavailable Service Regions'
         | 'Service Deployment Not Found'
         | 'Resource Not Found'
         | 'Deployment Variable Invalid'
-        | 'Service Template Update Not Allowed'
-        | 'Service Template Still In Use'
         | 'Unauthorized'
         | 'Access Denied'
         | 'Sensitive Field Encryption Or Decryption Failed Exception'
@@ -1126,7 +1111,8 @@ export type ErrorResponse = {
         | 'Async Stop Service Error'
         | 'Async Restart Service Error'
         | 'Deployment Failed Exception'
-        | 'Destroy Failed Exception';
+        | 'Destroy Failed Exception'
+        | 'Service Action Invalid';
     /**
      * Details of the errors occurred
      */
@@ -1154,20 +1140,20 @@ export enum errorType {
     INVALID_SERVICE_STATE = 'Invalid Service State',
     RESOURCE_INVALID_FOR_MONITORING = 'Resource Invalid For Monitoring',
     UNHANDLED_EXCEPTION = 'Unhandled Exception',
-    SERVICE_TEMPLATE_ALREADY_REGISTERED = 'Service Template Already Registered',
     ICON_PROCESSING_FAILED = 'Icon Processing Failed',
     SERVICE_TEMPLATE_NOT_REGISTERED = 'Service Template Not Registered',
     SERVICE_TEMPLATE_DISABLED = 'Service Template Disabled',
-    SERVICE_TEMPLATE_ALREADY_REVIEWED = 'Service Template Already Reviewed',
+    SERVICE_TEMPLATE_REQUEST_NOT_ALLOWED = 'Service Template Request Not Allowed',
+    SERVICE_TEMPLATE_REQUEST_NOT_FOUND = 'Service Template Request Not Found',
+    REVIEW_SERVICE_TEMPLATE_REQUEST_NOT_ALLOWED = 'Review Service Template Request Not Allowed',
     INVALID_SERVICE_VERSION = 'Invalid Service Version',
     INVALID_SERVICE_FLAVORS = 'Invalid Service Flavors',
+    MANDATORY_VALUE_MISSING = 'Mandatory Value Missing',
     INVALID_BILLING_CONFIG = 'Invalid Billing Config',
     UNAVAILABLE_SERVICE_REGIONS = 'Unavailable Service Regions',
     SERVICE_DEPLOYMENT_NOT_FOUND = 'Service Deployment Not Found',
     RESOURCE_NOT_FOUND = 'Resource Not Found',
     DEPLOYMENT_VARIABLE_INVALID = 'Deployment Variable Invalid',
-    SERVICE_TEMPLATE_UPDATE_NOT_ALLOWED = 'Service Template Update Not Allowed',
-    SERVICE_TEMPLATE_STILL_IN_USE = 'Service Template Still In Use',
     UNAUTHORIZED = 'Unauthorized',
     ACCESS_DENIED = 'Access Denied',
     SENSITIVE_FIELD_ENCRYPTION_OR_DECRYPTION_FAILED_EXCEPTION = 'Sensitive Field Encryption Or Decryption Failed Exception',
@@ -1205,6 +1191,7 @@ export enum errorType {
     ASYNC_RESTART_SERVICE_ERROR = 'Async Restart Service Error',
     DEPLOYMENT_FAILED_EXCEPTION = 'Deployment Failed Exception',
     DESTROY_FAILED_EXCEPTION = 'Destroy Failed Exception',
+    SERVICE_ACTION_INVALID = 'Service Action Invalid',
 }
 
 export type FlavorPriceResult = {
@@ -1485,9 +1472,9 @@ export type Ocl = {
      */
     description: string;
     /**
-     * The namespace of the managed service
+     * The serviceVendor of the managed service
      */
-    namespace: string;
+    serviceVendor: string;
     /**
      * The icon of the managed service
      */
@@ -1505,7 +1492,11 @@ export type Ocl = {
      * End user license agreement content of the service.
      */
     eula?: string;
-    serviceConfigurationManage?: ServiceConfigurationManage;
+    serviceConfigurationManage?: ServiceChangeManage;
+    /**
+     * manage service action.
+     */
+    serviceActions?: Array<ServiceAction>;
 };
 
 export type OrderFailedErrorResponse = {
@@ -1530,20 +1521,20 @@ export type OrderFailedErrorResponse = {
         | 'Invalid Service State'
         | 'Resource Invalid For Monitoring'
         | 'Unhandled Exception'
-        | 'Service Template Already Registered'
         | 'Icon Processing Failed'
         | 'Service Template Not Registered'
         | 'Service Template Disabled'
-        | 'Service Template Already Reviewed'
+        | 'Service Template Request Not Allowed'
+        | 'Service Template Request Not Found'
+        | 'Review Service Template Request Not Allowed'
         | 'Invalid Service Version'
         | 'Invalid Service Flavors'
+        | 'Mandatory Value Missing'
         | 'Invalid Billing Config'
         | 'Unavailable Service Regions'
         | 'Service Deployment Not Found'
         | 'Resource Not Found'
         | 'Deployment Variable Invalid'
-        | 'Service Template Update Not Allowed'
-        | 'Service Template Still In Use'
         | 'Unauthorized'
         | 'Access Denied'
         | 'Sensitive Field Encryption Or Decryption Failed Exception'
@@ -1580,7 +1571,8 @@ export type OrderFailedErrorResponse = {
         | 'Async Stop Service Error'
         | 'Async Restart Service Error'
         | 'Deployment Failed Exception'
-        | 'Destroy Failed Exception';
+        | 'Destroy Failed Exception'
+        | 'Service Action Invalid';
     /**
      * Details of the errors occurred
      */
@@ -1729,7 +1721,7 @@ export type ResourceUsage = {
     markUpPrices?: Array<PriceWithRegion>;
 };
 
-export type ReviewRegistrationRequest = {
+export type ReviewServiceTemplateRequest = {
     /**
      * The result of review registration.
      */
@@ -1767,9 +1759,38 @@ export type ScriptsRepo = {
 };
 
 /**
- * Collection of service configuration change requests generated for the specific change order.
+ * manage service action.
  */
-export type ServiceConfigurationChangeDetails = {
+export type ServiceAction = {
+    /**
+     * the name of service action.
+     */
+    name: string;
+    /**
+     * the tool used to manage the service action.
+     */
+    type: 'ansible';
+    /**
+     * The collection of the action manage script.
+     */
+    actionManageScripts?: Array<ServiceChangeScript>;
+    /**
+     * The collection of service action parameters.
+     */
+    actionParameters?: Array<ServiceChangeParameter>;
+};
+
+/**
+ * the tool used to manage the service action.
+ */
+export enum type4 {
+    ANSIBLE = 'ansible',
+}
+
+/**
+ * Collection of service change details requests generated for the specific change order.
+ */
+export type ServiceChangeDetails = {
     /**
      * ID of the change request created as part of the change order.
      */
@@ -1808,7 +1829,29 @@ export enum status {
     ERROR = 'error',
 }
 
-export type ServiceConfigurationChangeOrderDetails = {
+/**
+ * manage service configuration.
+ */
+export type ServiceChangeManage = {
+    /**
+     * the tool used to manage the service configuration.
+     */
+    type: 'ansible';
+    /**
+     * the version of the agent that will be used by service resources.
+     */
+    agentVersion: string;
+    /**
+     * The collection of the configuration manage script.
+     */
+    configManageScripts?: Array<ServiceChangeScript>;
+    /**
+     * The collection of service configuration parameters.
+     */
+    configurationParameters?: Array<ServiceChangeParameter>;
+};
+
+export type ServiceChangeOrderDetails = {
     /**
      * The id of the order.
      */
@@ -1824,9 +1867,9 @@ export type ServiceConfigurationChangeOrderDetails = {
         [key: string]: unknown;
     };
     /**
-     * Collection of service configuration change requests generated for the specific change order.
+     * Collection of service change details requests generated for the specific change order.
      */
-    changeRequests: Array<ServiceConfigurationChangeDetails>;
+    changeRequests: Array<ServiceChangeDetails>;
 };
 
 /**
@@ -1839,70 +1882,10 @@ export enum orderStatus {
     FAILED = 'failed',
 }
 
-export type ServiceConfigurationChangeRequest = {
-    changeId?: string;
-    configParameters?: {
-        [key: string]: unknown;
-    };
-    ansibleScriptConfig?: AnsibleScriptConfig;
-    ansibleInventory?: {
-        [key: string]: unknown;
-    };
-};
-
 /**
- * result of the service configuration update request.
+ * The collection of service action parameters.
  */
-export type ServiceConfigurationChangeResult = {
-    isSuccessful?: boolean;
-    error?: string;
-    tasks?: Array<AnsibleTaskResult>;
-};
-
-/**
- * Details of the service configuration.
- */
-export type ServiceConfigurationDetails = {
-    configuration?: {
-        [key: string]: unknown;
-    };
-    createdTime?: string;
-    updatedTime?: string;
-};
-
-/**
- * manage service configuration.
- */
-export type ServiceConfigurationManage = {
-    /**
-     * the tool used to manage the service configuration.
-     */
-    type: 'ansible';
-    /**
-     * the version of the agent that will be used by service resources.
-     */
-    agentVersion: string;
-    /**
-     * The collection of the configuration manage script.
-     */
-    configManageScripts?: Array<ConfigManageScript>;
-    /**
-     * The collection of service configuration parameters.
-     */
-    configurationParameters?: Array<ServiceConfigurationParameter>;
-};
-
-/**
- * the tool used to manage the service configuration.
- */
-export enum type4 {
-    ANSIBLE = 'ansible',
-}
-
-/**
- * The collection of service configuration parameters.
- */
-export type ServiceConfigurationParameter = {
+export type ServiceChangeParameter = {
     /**
      * The name of the service config parameter
      */
@@ -1948,6 +1931,52 @@ export type ServiceConfigurationParameter = {
      * Service component which manages this configuration parameter.
      */
     managedBy: string;
+};
+
+/**
+ * The collection of the action manage script.
+ */
+export type ServiceChangeScript = {
+    /**
+     * should be the name of the resource available in the deployer script.
+     */
+    changeHandler: string;
+    /**
+     * Means should the configuration update run on each node of the specific component or just one.
+     */
+    runOnlyOnce: boolean;
+    ansibleScriptConfig: AnsibleScriptConfig;
+};
+
+export type ServiceConfigurationChangeRequest = {
+    changeId?: string;
+    configParameters?: {
+        [key: string]: unknown;
+    };
+    ansibleScriptConfig?: AnsibleScriptConfig;
+    ansibleInventory?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * result of the service configuration update request.
+ */
+export type ServiceConfigurationChangeResult = {
+    isSuccessful?: boolean;
+    error?: string;
+    tasks?: Array<AnsibleTaskResult>;
+};
+
+/**
+ * Details of the service configuration.
+ */
+export type ServiceConfigurationDetails = {
+    configuration?: {
+        [key: string]: unknown;
+    };
+    createdTime?: string;
+    updatedTime?: string;
 };
 
 export type ServiceConfigurationUpdate = {
@@ -2103,6 +2132,18 @@ export type ServiceOrderDetails = {
     previousDeployedResultProperties?: {
         [key: string]: string;
     };
+    /**
+     *  The service order handler.
+     */
+    handler:
+        | 'terraform-local'
+        | 'terraform-boot'
+        | 'open-tofu-local'
+        | 'tofu-maker'
+        | 'internal'
+        | 'workFlow'
+        | 'agent'
+        | 'plugin';
 };
 
 /**
@@ -2132,6 +2173,20 @@ export enum taskStatus {
     IN_PROGRESS = 'in-progress',
     SUCCESSFUL = 'successful',
     FAILED = 'failed',
+}
+
+/**
+ *  The service order handler.
+ */
+export enum handler {
+    TERRAFORM_LOCAL = 'terraform-local',
+    TERRAFORM_BOOT = 'terraform-boot',
+    OPEN_TOFU_LOCAL = 'open-tofu-local',
+    TOFU_MAKER = 'tofu-maker',
+    INTERNAL = 'internal',
+    WORK_FLOW = 'workFlow',
+    AGENT = 'agent',
+    PLUGIN = 'plugin',
 }
 
 export type ServiceOrderStatusUpdate = {
@@ -2233,17 +2288,6 @@ export type ServiceProviderContactDetails = {
     websites?: Array<string>;
 };
 
-export type ServiceTemplateChangeInfo = {
-    /**
-     * ID of the registered service template.
-     */
-    serviceTemplateId: string;
-    /**
-     * ID of the change history of the service template.
-     */
-    changeId: string;
-};
-
 export type ServiceTemplateDetailVo = {
     /**
      * ID of the registered service.
@@ -2285,9 +2329,9 @@ export type ServiceTemplateDetailVo = {
         | 'middleware'
         | 'others';
     /**
-     * Namespace of the user who registered service template.
+     * ServiceVendor of the user who registered service template.
      */
-    namespace: string;
+    serviceVendor: string;
     /**
      * The regions of the Cloud Service Provider.
      */
@@ -2320,34 +2364,128 @@ export type ServiceTemplateDetailVo = {
      */
     lastModifiedTime: string;
     /**
-     * State of registered service template.
+     * Registration state of service template.
      */
-    serviceTemplateRegistrationState: 'in-review' | 'approved' | 'rejected';
+    serviceTemplateRegistrationState: 'in-review' | 'approved' | 'cancelled' | 'rejected';
     /**
-     * Is service template in updating.
+     * If any request for the service template has a review in-progress.
      */
-    isUpdatePending: boolean;
+    isReviewInProgress: boolean;
     /**
      * Is available in catalog.
      */
-    availableInCatalog: boolean;
+    isAvailableInCatalog: boolean;
     serviceProviderContactDetails: ServiceProviderContactDetails;
     /**
      * End user license agreement content of the service.
      */
     eula?: string;
-    serviceConfigurationManage?: ServiceConfigurationManage;
+    serviceConfigurationManage?: ServiceChangeManage;
     links?: Array<Link>;
 };
 
 /**
- * State of registered service template.
+ * Registration state of service template.
  */
 export enum serviceTemplateRegistrationState {
     IN_REVIEW = 'in-review',
     APPROVED = 'approved',
+    CANCELLED = 'cancelled',
     REJECTED = 'rejected',
 }
+
+export type ServiceTemplateRequestHistory = {
+    /**
+     * ID of the service template.
+     */
+    serviceTemplateId: string;
+    /**
+     * ID of the request history of the service template.
+     */
+    requestId: string;
+    /**
+     * Type of the request.
+     */
+    requestType: 'register' | 'update' | 'unpublish' | 'republish';
+    /**
+     * Status of the request.
+     */
+    status: 'in-review' | 'accepted' | 'rejected' | 'cancelled';
+    /**
+     * Comment of the review request.
+     */
+    reviewComment?: string;
+    /**
+     * Status of the request.
+     */
+    blockTemplateUntilReviewed?: boolean;
+    /**
+     * Create time of the service template request.
+     */
+    createTime: string;
+    /**
+     * Last update time of the service template request.
+     */
+    lastModifiedTime: string;
+    requestSubmittedForReview?: boolean;
+};
+
+/**
+ * Type of the request.
+ */
+export enum requestType {
+    REGISTER = 'register',
+    UPDATE = 'update',
+    UNPUBLISH = 'unpublish',
+    REPUBLISH = 'republish',
+}
+
+/**
+ * Status of the request.
+ */
+export enum status2 {
+    IN_REVIEW = 'in-review',
+    ACCEPTED = 'accepted',
+    REJECTED = 'rejected',
+    CANCELLED = 'cancelled',
+}
+
+export type ServiceTemplateRequestInfo = {
+    /**
+     * ID of the service template.
+     */
+    serviceTemplateId: string;
+    /**
+     * ID of the request history of the service template.
+     */
+    requestId: string;
+    requestSubmittedForReview?: boolean;
+};
+
+export type ServiceTemplateRequestToReview = {
+    /**
+     * ID of the service template.
+     */
+    serviceTemplateId: string;
+    /**
+     * ID of the request history of the service template.
+     */
+    requestId: string;
+    /**
+     * Type of the request.
+     */
+    requestType: 'register' | 'update' | 'unpublish' | 'republish';
+    ocl: Ocl;
+    /**
+     * Create time of the service template request.
+     */
+    createTime: string;
+    /**
+     * Last update time of the service template request.
+     */
+    lastModifiedTime: string;
+    requestSubmittedForReview?: boolean;
+};
 
 export type SystemStatus = {
     /**
@@ -2428,6 +2566,10 @@ export type UserOrderableServiceVo = {
      */
     regions: Array<Region>;
     /**
+     * The serviceVendor of the orderable service.
+     */
+    serviceVendor: string;
+    /**
      * The description of the orderable service.
      */
     description: string;
@@ -2457,7 +2599,7 @@ export type UserOrderableServiceVo = {
     /**
      * The collection of service configuration parameters.
      */
-    configurationParameters?: Array<ServiceConfigurationParameter>;
+    configurationParameters?: Array<ServiceChangeParameter>;
     links?: Array<Link>;
 };
 
@@ -2702,7 +2844,7 @@ export type WorkFlowTask = {
 /**
  * The status of the Task
  */
-export enum status2 {
+export enum status3 {
     DONE = 'done',
     FAILED = 'failed',
 }
@@ -2858,82 +3000,81 @@ export type ChangeServiceLockConfigData = {
 
 export type ChangeServiceLockConfigResponse = ServiceOrder;
 
-export type DetailsData = {
+export type GetServiceTemplateDetailsByIdData = {
     /**
      * id of service template
      */
-    id: string;
+    serviceTemplateId: string;
 };
 
-export type DetailsResponse = ServiceTemplateDetailVo;
+export type GetServiceTemplateDetailsByIdResponse = ServiceTemplateDetailVo;
 
 export type UpdateData = {
     /**
-     * id of service template
-     */
-    id: string;
-    /**
      * If true, the old service template is also removed from catalog until the updated one is reviewed and approved.
      */
-    isRemoveServiceTemplateUntilApproved: boolean;
+    isUnpublishUntilApproved: boolean;
     requestBody: Ocl;
+    /**
+     * id of service template
+     */
+    serviceTemplateId: string;
 };
 
-export type UpdateResponse = ServiceTemplateChangeInfo;
+export type UpdateResponse = ServiceTemplateRequestInfo;
 
 export type DeleteServiceTemplateData = {
     /**
      * id of service template
      */
-    id: string;
+    serviceTemplateId: string;
 };
 
 export type DeleteServiceTemplateResponse = void;
 
-export type UnregisterData = {
+export type UnpublishData = {
     /**
      * id of service template
      */
-    id: string;
+    serviceTemplateId: string;
 };
 
-export type UnregisterResponse = ServiceTemplateDetailVo;
+export type UnpublishResponse = ServiceTemplateRequestInfo;
 
-export type ReviewRegistrationData = {
+export type CancelServiceTemplateRequestByRequestIdData = {
+    /**
+     * id of service template request
+     */
+    requestId: string;
+};
+
+export type CancelServiceTemplateRequestByRequestIdResponse = void;
+
+export type RepublishData = {
     /**
      * id of service template
      */
-    id: string;
-    requestBody: ReviewRegistrationRequest;
+    serviceTemplateId: string;
 };
 
-export type ReviewRegistrationResponse = void;
-
-export type ReRegisterServiceTemplateData = {
-    /**
-     * id of service template
-     */
-    id: string;
-};
-
-export type ReRegisterServiceTemplateResponse = ServiceTemplateDetailVo;
+export type RepublishResponse = ServiceTemplateRequestInfo;
 
 export type FetchUpdateData = {
     /**
-     * id of service template
-     */
-    id: string;
-    /**
      * If true, the old service template is also removed from catalog until the updated one is reviewed and approved.
      */
-    isRemoveServiceTemplateUntilApproved: boolean;
+    isUnpublishUntilApproved: boolean;
     /**
      * URL of Ocl file
      */
     oclLocation: string;
+    /**
+     * id of service template
+     */
+    serviceTemplateId: string;
 };
 
-export type FetchUpdateResponse = ServiceTemplateChangeInfo;
+export type FetchUpdateResponse = ServiceTemplateRequestInfo;
 
 export type GetServicePolicyDetailsData = {
     id: string;
@@ -3043,6 +3184,16 @@ export type DeleteIsvCloudCredentialData = {
 
 export type DeleteIsvCloudCredentialResponse = void;
 
+export type ReviewServiceTemplateRequestData = {
+    requestBody: ReviewServiceTemplateRequest;
+    /**
+     * id of service template request
+     */
+    requestId: string;
+};
+
+export type ReviewServiceTemplateRequestResponse = void;
+
 export type UpdateConfigurationChangeResultData = {
     /**
      * id of the update request.
@@ -3122,10 +3273,6 @@ export type MigrateResponse = ServiceOrder;
 
 export type GetAllServiceTemplatesByIsvData = {
     /**
-     * is available in catalog
-     */
-    availableInCatalog?: boolean;
-    /**
      * category of the service
      */
     categoryName?:
@@ -3153,9 +3300,13 @@ export type GetAllServiceTemplatesByIsvData = {
         | 'azure'
         | 'GoogleCloudPlatform';
     /**
-     * is service template updating
+     * is available in catalog
      */
-    isUpdatePending?: boolean;
+    isAvailableInCatalog?: boolean;
+    /**
+     * is any request in review progress
+     */
+    isReviewInProgress?: boolean;
     /**
      * who hosts ths cloud resources
      */
@@ -3167,7 +3318,7 @@ export type GetAllServiceTemplatesByIsvData = {
     /**
      * state of service template registration
      */
-    serviceTemplateRegistrationState?: 'in-review' | 'approved' | 'rejected';
+    serviceTemplateRegistrationState?: 'in-review' | 'approved' | 'cancelled' | 'rejected';
     /**
      * version of the service
      */
@@ -3180,7 +3331,7 @@ export type RegisterData = {
     requestBody: Ocl;
 };
 
-export type RegisterResponse = ServiceTemplateChangeInfo;
+export type RegisterResponse = ServiceTemplateRequestInfo;
 
 export type FetchData = {
     /**
@@ -3189,7 +3340,7 @@ export type FetchData = {
     oclLocation: string;
 };
 
-export type FetchResponse = ServiceTemplateChangeInfo;
+export type FetchResponse = ServiceTemplateRequestInfo;
 
 export type ListServicePoliciesData = {
     /**
@@ -3515,7 +3666,33 @@ export type GetAllServiceConfigurationChangeDetailsData = {
     status?: 'pending' | 'processing' | 'successful' | 'error';
 };
 
-export type GetAllServiceConfigurationChangeDetailsResponse = Array<ServiceConfigurationChangeOrderDetails>;
+export type GetAllServiceConfigurationChangeDetailsResponse = Array<ServiceChangeOrderDetails>;
+
+export type GetServiceTemplateRequestHistoryByServiceTemplateIdData = {
+    /**
+     * status of service template request
+     */
+    requestStatus?: 'in-review' | 'accepted' | 'rejected' | 'cancelled';
+    /**
+     * type of service template request
+     */
+    requestType?: 'register' | 'update' | 'unpublish' | 'republish';
+    /**
+     * id of service template
+     */
+    serviceTemplateId: string;
+};
+
+export type GetServiceTemplateRequestHistoryByServiceTemplateIdResponse = Array<ServiceTemplateRequestHistory>;
+
+export type GetRequestedServiceTemplateByRequestIdData = {
+    /**
+     * id of service template request
+     */
+    requestId: string;
+};
+
+export type GetRequestedServiceTemplateByRequestIdResponse = Ocl;
 
 export type GetCurrentConfigurationOfServiceData = {
     /**
@@ -3639,10 +3816,6 @@ export type GetActiveCspsResponse = Array<
 
 export type ListManagedServiceTemplatesData = {
     /**
-     * is available in catalog
-     */
-    availableInCatalog?: boolean;
-    /**
      * category of the service
      */
     categoryName?:
@@ -3657,9 +3830,13 @@ export type ListManagedServiceTemplatesData = {
         | 'middleware'
         | 'others';
     /**
-     * is service template updating
+     * is available in catalog
      */
-    isUpdatePending?: boolean;
+    isAvailableInCatalog?: boolean;
+    /**
+     * is any request in review progress
+     */
+    isReviewInProgress?: boolean;
     /**
      * who hosts ths cloud resources
      */
@@ -3671,7 +3848,7 @@ export type ListManagedServiceTemplatesData = {
     /**
      * state of service template registration
      */
-    serviceTemplateRegistrationState?: 'in-review' | 'approved' | 'rejected';
+    serviceTemplateRegistrationState?: 'in-review' | 'approved' | 'cancelled' | 'rejected';
     /**
      * version of the service
      */
@@ -3680,14 +3857,23 @@ export type ListManagedServiceTemplatesData = {
 
 export type ListManagedServiceTemplatesResponse = Array<ServiceTemplateDetailVo>;
 
-export type GetRegistrationDetailsData = {
+export type GetServiceTemplateDetailsData = {
     /**
      * id of service template
      */
-    id: string;
+    serviceTemplateId: string;
 };
 
-export type GetRegistrationDetailsResponse = ServiceTemplateDetailVo;
+export type GetServiceTemplateDetailsResponse = ServiceTemplateDetailVo;
+
+export type GetPendingServiceReviewRequestsData = {
+    /**
+     * id of service template
+     */
+    serviceTemplateId?: string;
+};
+
+export type GetPendingServiceReviewRequestsResponse = Array<ServiceTemplateRequestToReview>;
 
 export type GetExistingResourceNamesWithKindData = {
     /**

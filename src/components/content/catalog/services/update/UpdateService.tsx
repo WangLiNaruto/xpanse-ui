@@ -14,12 +14,12 @@ import registerStyles from '../../../../../styles/register.module.css';
 import {
     ApiError,
     category,
-    details,
-    DetailsData,
     ErrorResponse,
+    getServiceTemplateDetailsById,
+    GetServiceTemplateDetailsByIdData,
     Ocl,
-    ServiceTemplateChangeInfo,
     serviceTemplateRegistrationState,
+    ServiceTemplateRequestInfo,
     update,
     type UpdateData,
 } from '../../../../../xpanse-api/generated';
@@ -35,19 +35,21 @@ function UpdateService({
     id,
     category,
     isViewDisabled,
+    registrationState,
+    isReviewInProgress,
 }: {
     id: string;
     category: category;
     isViewDisabled: boolean;
+    registrationState: serviceTemplateRegistrationState;
+    isReviewInProgress: boolean;
 }): React.JSX.Element {
     const ocl = useRef<Ocl | undefined>(undefined);
     const files = useRef<UploadFile[]>([]);
     const yamlValidationResult = useRef<string>('');
     const oclDisplayData = useRef<React.JSX.Element>(<></>);
     const updateResult = useRef<string[]>([]);
-    const serviceRegistrationStatus = useRef<serviceTemplateRegistrationState>(
-        serviceTemplateRegistrationState.IN_REVIEW
-    );
+    const serviceRegistrationStatus = useRef<serviceTemplateRegistrationState>(registrationState);
     const [yamlSyntaxValidationStatus, setYamlSyntaxValidationStatus] = useState<ValidationStatus>('notStarted');
     const [oclValidationStatus, setOclValidationStatus] = useState<ValidationStatus>('notStarted');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,19 +57,19 @@ function UpdateService({
     const updateServiceRequest = useMutation({
         mutationFn: (ocl: Ocl) => {
             const data: UpdateData = {
-                id: id,
-                isRemoveServiceTemplateUntilApproved: true,
+                serviceTemplateId: id,
+                isUnpublishUntilApproved: true,
                 requestBody: ocl,
             };
             return update(data);
         },
-        onSuccess: async (serviceTemplateChangeInfo: ServiceTemplateChangeInfo) => {
+        onSuccess: async (serviceTemplateRequestInfo: ServiceTemplateRequestInfo) => {
             files.current[0].status = 'done';
-            updateResult.current = [`ID - ${serviceTemplateChangeInfo.serviceTemplateId}`];
-            const detailsData: DetailsData = {
-                id: serviceTemplateChangeInfo.serviceTemplateId,
+            updateResult.current = [`ID - ${serviceTemplateRequestInfo.serviceTemplateId}`];
+            const getServiceTemplateDetailsByIdData: GetServiceTemplateDetailsByIdData = {
+                serviceTemplateId: serviceTemplateRequestInfo.serviceTemplateId,
             };
-            const serviceTemplateDetailsVo = await details(detailsData);
+            const serviceTemplateDetailsVo = await getServiceTemplateDetailsById(getServiceTemplateDetailsByIdData);
             serviceRegistrationStatus.current =
                 serviceTemplateDetailsVo.serviceTemplateRegistrationState as serviceTemplateRegistrationState;
         },
@@ -166,13 +168,16 @@ function UpdateService({
     };
 
     return (
-        <div className={catalogStyles.updateUnregisterBtnClass}>
+        <div className={catalogStyles.updateUnpublishBtnClass}>
             <Button
                 type='primary'
                 icon={<EditOutlined />}
                 onClick={showModal}
                 className={catalogStyles.catalogManageBtnClass}
-                disabled={isViewDisabled}
+                disabled={
+                    isViewDisabled ||
+                    (isReviewInProgress && registrationState === serviceTemplateRegistrationState.APPROVED)
+                }
             >
                 Update
             </Button>
