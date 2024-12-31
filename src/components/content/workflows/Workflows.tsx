@@ -11,14 +11,13 @@ import React, { useState } from 'react';
 import tableButtonStyles from '../../../styles/table-buttons.module.css';
 import tableStyles from '../../../styles/table.module.css';
 import {
-    ApiError,
     ErrorResponse,
     manageFailedOrder,
     type ManageFailedOrderData,
     status,
     WorkFlowTask,
 } from '../../../xpanse-api/generated';
-import { isErrorResponse } from '../common/error/isErrorResponse';
+import { isHandleKnownErrorResponse } from '../common/error/isHandleKnownErrorResponse.ts';
 import { WorkflowsTip } from './WorkflowsTip';
 import useAllTasksQuery from './query/useAllTasksQuery';
 
@@ -40,10 +39,10 @@ function Workflows(): React.JSX.Element {
     };
 
     if (tasksQuery.error) {
-        if (tasksQuery.error instanceof ApiError && tasksQuery.error.body && isErrorResponse(tasksQuery.error.body)) {
+        if (isHandleKnownErrorResponse(tasksQuery.error)) {
             const response: ErrorResponse = tasksQuery.error.body;
             getTipInfo('error', response.details.join());
-        } else if (tasksQuery.error instanceof Error) {
+        } else {
             getTipInfo('error', tasksQuery.error.message);
         }
         setIsRefresh(false);
@@ -52,7 +51,7 @@ function Workflows(): React.JSX.Element {
     const completeFailedTasksQuery = useMutation({
         mutationFn: (taskId: string) => {
             const data: ManageFailedOrderData = {
-                id: taskId,
+                taskId: taskId,
                 retryOrder: true,
             };
             return manageFailedOrder(data);
@@ -67,7 +66,7 @@ function Workflows(): React.JSX.Element {
         },
         onError: (error: Error) => {
             setIsRefresh(false);
-            if (error instanceof ApiError && error.body && isErrorResponse(error.body)) {
+            if (isHandleKnownErrorResponse(error)) {
                 const response: ErrorResponse = error.body;
                 getTipInfo('error', response.details.join());
             } else {
@@ -79,7 +78,7 @@ function Workflows(): React.JSX.Element {
     const closeFailedTasksQuery = useMutation({
         mutationFn: (taskId: string) => {
             const data: ManageFailedOrderData = {
-                id: taskId,
+                taskId: taskId,
                 retryOrder: false,
             };
             return manageFailedOrder(data);
@@ -91,7 +90,7 @@ function Workflows(): React.JSX.Element {
         },
         onError: (error: Error) => {
             setIsRefresh(false);
-            if (error instanceof ApiError && error.body && isErrorResponse(error.body)) {
+            if (isHandleKnownErrorResponse(error)) {
                 const response: ErrorResponse = error.body;
                 getTipInfo('error', response.details.join());
             } else {

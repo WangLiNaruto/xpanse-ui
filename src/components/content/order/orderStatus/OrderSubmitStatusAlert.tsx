@@ -7,7 +7,6 @@ import { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import React, { useMemo } from 'react';
 import { useStopwatch } from 'react-timer-hook';
 import {
-    ApiError,
     DeployedServiceDetails,
     DeployRequest,
     ErrorResponse,
@@ -18,7 +17,7 @@ import {
     taskStatus,
 } from '../../../../xpanse-api/generated';
 import { convertStringArrayToUnorderedList } from '../../../utils/generateUnorderedList';
-import { isErrorResponse } from '../../common/error/isErrorResponse';
+import { isHandleKnownErrorResponse } from '../../common/error/isHandleKnownErrorResponse.ts';
 import { OperationType } from '../types/OperationType';
 import { OrderSubmitResult } from './OrderSubmitResult';
 import { ProcessingStatus } from './ProcessingStatus';
@@ -53,26 +52,22 @@ function OrderSubmitStatusAlert({
         if (submitDeploymentRequest.isPending || redeployFailedDeploymentQuery.isPending) {
             return 'Request submission in-progress';
         } else if (redeployFailedDeploymentQuery.isError) {
-            if (
-                redeployFailedDeploymentQuery.error instanceof ApiError &&
-                redeployFailedDeploymentQuery.error.body &&
-                isErrorResponse(redeployFailedDeploymentQuery.error.body)
-            ) {
+            if (isHandleKnownErrorResponse(redeployFailedDeploymentQuery.error)) {
                 const response: ErrorResponse = redeployFailedDeploymentQuery.error.body;
-                return getOrderSubmissionFailedDisplay(response.details);
+                return getOrderSubmissionFailedDisplay(response.errorType, response.details);
             } else {
-                return getOrderSubmissionFailedDisplay([redeployFailedDeploymentQuery.error.message]);
+                return getOrderSubmissionFailedDisplay(redeployFailedDeploymentQuery.error.name, [
+                    redeployFailedDeploymentQuery.error.message,
+                ]);
             }
         } else if (submitDeploymentRequest.isError) {
-            if (
-                submitDeploymentRequest.error instanceof ApiError &&
-                submitDeploymentRequest.error.body &&
-                isErrorResponse(submitDeploymentRequest.error.body)
-            ) {
+            if (isHandleKnownErrorResponse(submitDeploymentRequest.error)) {
                 const response: ErrorResponse = submitDeploymentRequest.error.body;
-                return getOrderSubmissionFailedDisplay(response.details);
+                return getOrderSubmissionFailedDisplay(response.errorType, response.details);
             } else {
-                return getOrderSubmissionFailedDisplay([submitDeploymentRequest.error.message]);
+                return getOrderSubmissionFailedDisplay(submitDeploymentRequest.error.name, [
+                    submitDeploymentRequest.error.message,
+                ]);
             }
         } else if (submitDeploymentRequest.isSuccess || redeployFailedDeploymentQuery.isSuccess) {
             if (
@@ -142,10 +137,10 @@ function OrderSubmitStatusAlert({
         return 'success';
     }, [stopWatch, submitDeploymentRequest, redeployFailedDeploymentQuery, getSubmitLatestServiceOrderStatusQuery]);
 
-    function getOrderSubmissionFailedDisplay(reasons: string[]) {
+    function getOrderSubmissionFailedDisplay(errorType: string, reasons: string[]) {
         return (
             <div>
-                <span>{'Service deployment request failed.'}</span>
+                <span>{errorType.length > 0 ? errorType : 'Service deployment request failed.'}</span>
                 <div>{convertStringArrayToUnorderedList(reasons)}</div>
             </div>
         );
@@ -156,9 +151,7 @@ function OrderSubmitStatusAlert({
             return submitDeploymentRequest.data.serviceId;
         } else {
             if (
-                submitDeploymentRequest.error instanceof ApiError &&
-                submitDeploymentRequest.error.body &&
-                typeof submitDeploymentRequest.error.body === 'object' &&
+                isHandleKnownErrorResponse(submitDeploymentRequest.error) &&
                 'serviceId' in submitDeploymentRequest.error.body
             ) {
                 return submitDeploymentRequest.error.body.serviceId as string;
@@ -170,20 +163,14 @@ function OrderSubmitStatusAlert({
 
     const isDeployDisabled = () => {
         if (
-            submitDeploymentRequest.isError &&
-            submitDeploymentRequest.error instanceof ApiError &&
-            submitDeploymentRequest.error.body &&
-            typeof submitDeploymentRequest.error.body === 'object' &&
+            isHandleKnownErrorResponse(submitDeploymentRequest.error) &&
             !('orderId' in submitDeploymentRequest.error.body && 'serviceId' in submitDeploymentRequest.error.body)
         ) {
             return true;
         }
 
         if (
-            redeployFailedDeploymentQuery.isError &&
-            redeployFailedDeploymentQuery.error instanceof ApiError &&
-            redeployFailedDeploymentQuery.error.body &&
-            typeof redeployFailedDeploymentQuery.error.body === 'object' &&
+            isHandleKnownErrorResponse(redeployFailedDeploymentQuery.error) &&
             !(
                 'orderId' in redeployFailedDeploymentQuery.error.body &&
                 'serviceId' in redeployFailedDeploymentQuery.error.body

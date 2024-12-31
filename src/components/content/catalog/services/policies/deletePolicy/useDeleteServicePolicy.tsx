@@ -8,9 +8,9 @@ import { deleteServicePolicy, DeleteServicePolicyData } from '../../../../../../
 
 export const useDeleteServicePolicy = () => {
     return useMutation({
-        mutationFn: (id: string) => {
+        mutationFn: (servicePolicyId: string) => {
             const deleteData: DeleteServicePolicyData = {
-                id: id,
+                servicePolicyId: servicePolicyId,
             };
             return deleteServicePolicy(deleteData);
         },

@@ -12,10 +12,16 @@ import {
 
 export const useUpdateServicePolicy = () => {
     return useMutation({
-        mutationFn: ({ id, policyUpdateRequest }: { id: string; policyUpdateRequest: ServicePolicyUpdateRequest }) => {
+        mutationFn: ({
+            servicePolicyId,
+            servicePolicyUpdateRequest,
+        }: {
+            servicePolicyId: string;
+            servicePolicyUpdateRequest: ServicePolicyUpdateRequest;
+        }) => {
             const data: UpdateServicePolicyData = {
-                id: id,
-                requestBody: policyUpdateRequest,
+                servicePolicyId: servicePolicyId,
+                requestBody: servicePolicyUpdateRequest,
             };
             return updateServicePolicy(data);
         },

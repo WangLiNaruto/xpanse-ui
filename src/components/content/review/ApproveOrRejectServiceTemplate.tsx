@@ -7,8 +7,8 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { Alert, Input, Modal } from 'antd';
 import React, { useState } from 'react';
 import serviceReviewStyles from '../../../styles/service-review.module.css';
-import { ApiError, ErrorResponse, reviewResult, ServiceTemplateRequestToReview } from '../../../xpanse-api/generated';
-import { isErrorResponse } from '../common/error/isErrorResponse';
+import { ErrorResponse, reviewResult, ServiceTemplateRequestToReview } from '../../../xpanse-api/generated';
+import { isHandleKnownErrorResponse } from '../common/error/isHandleKnownErrorResponse.ts';
 import { ApproveOrRejectRequestParams } from './query/useApproveOrRejectRequest';
 
 export const ApproveOrRejectServiceTemplate = ({
@@ -28,8 +28,14 @@ export const ApproveOrRejectServiceTemplate = ({
 }): React.JSX.Element => {
     const { TextArea } = Input;
     const [comments, setComments] = useState<string>('');
+    const [error, setError] = useState<string>('');
     const handleOk = () => {
         if (isApproved !== undefined) {
+            if (comments.trim() === '') {
+                setError('Comments are required.');
+                return;
+            }
+
             const request: ApproveOrRejectRequestParams = {
                 id: currentServiceTemplateRequestToReview.requestId,
                 reviewServiceTemplateRequest: {
@@ -40,28 +46,30 @@ export const ApproveOrRejectServiceTemplate = ({
             approveOrRejectRequest.mutate(request);
             handleModalClose(true);
             setComments('');
+            setError('');
         }
     };
 
     const handleCancel = () => {
+        setError('');
+        setComments('');
         handleModalClose(true);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setError('');
         setComments(e.target.value);
     };
 
     const onClose = () => {
+        setError('');
+        setComments('');
         setAlertTipCloseStatus(true);
     };
 
     if (approveOrRejectRequest.isError) {
         let errorMessage;
-        if (
-            approveOrRejectRequest.error instanceof ApiError &&
-            approveOrRejectRequest.error.body &&
-            isErrorResponse(approveOrRejectRequest.error.body)
-        ) {
+        if (isHandleKnownErrorResponse(approveOrRejectRequest.error)) {
             const response: ErrorResponse = approveOrRejectRequest.error.body;
             errorMessage = response.details.join();
         } else {
@@ -104,12 +112,14 @@ export const ApproveOrRejectServiceTemplate = ({
                 onOk={handleOk}
                 onCancel={handleCancel}
             >
+                {error && <p className={serviceReviewStyles.reviewCommentsRequired}>{error}</p>}
                 <TextArea
                     rows={10}
                     placeholder='Please input your comments.'
                     maxLength={1000}
                     value={comments}
                     onChange={handleChange}
+                    rootClassName={error ? serviceReviewStyles.reviewCommentsRequiredText : ''}
                 />
             </Modal>
         </>

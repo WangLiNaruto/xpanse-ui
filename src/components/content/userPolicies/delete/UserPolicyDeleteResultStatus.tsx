@@ -6,32 +6,39 @@
 import { Alert } from 'antd';
 import React from 'react';
 import submitAlertStyles from '../../../../styles/submit-alert.module.css';
-import { ApiError, ErrorResponse, UserPolicy } from '../../../../xpanse-api/generated';
-import { isErrorResponse } from '../../common/error/isErrorResponse';
-import PolicySubmitResultDetails from '../PolicySubmitResultDetails';
+import { ErrorResponse } from '../../../../xpanse-api/generated';
+import { isHandleKnownErrorResponse } from '../../common/error/isHandleKnownErrorResponse.ts';
+import UserPolicySubmitResultDetails from '../UserPolicySubmitResultDetails.tsx';
 
-export default function PolicyUpdateResultStatus({
+export default function UserPolicyDeleteResultStatus({
+    id,
     isError,
     isSuccess,
     error,
-    currentPolicyService,
+    getDeleteCloseStatus,
 }: {
+    id: string;
     isError: boolean;
     isSuccess: boolean;
     error: Error | null;
-    currentPolicyService: UserPolicy | undefined;
+    getDeleteCloseStatus: (arg: boolean) => void;
 }): React.JSX.Element {
+    const onClose = () => {
+        getDeleteCloseStatus(true);
+    };
+
     if (isError) {
-        if (error instanceof ApiError && error.body && isErrorResponse(error.body)) {
+        if (isHandleKnownErrorResponse(error)) {
             const response: ErrorResponse = error.body;
             return (
                 <div className={submitAlertStyles.submitAlertTip}>
                     {' '}
                     <Alert
                         message={response.details}
-                        description={<PolicySubmitResultDetails msg={'Policy update request failed'} uuid={''} />}
+                        description={<UserPolicySubmitResultDetails msg={'Policy delete request failed'} uuid={id} />}
                         showIcon
                         closable={true}
+                        onClose={onClose}
                         type={'error'}
                     />{' '}
                 </div>
@@ -42,10 +49,11 @@ export default function PolicyUpdateResultStatus({
                     {' '}
                     <Alert
                         message={error?.message}
-                        description={<PolicySubmitResultDetails msg={'Policy update request failed'} uuid={''} />}
+                        description={<UserPolicySubmitResultDetails msg={'Policy delete request failed'} uuid={id} />}
                         showIcon
                         closable={true}
-                        type={'error'}
+                        onClose={onClose}
+                        type={'success'}
                     />{' '}
                 </div>
             );
@@ -58,14 +66,10 @@ export default function PolicyUpdateResultStatus({
                 {' '}
                 <Alert
                     message={'Policy Process Status'}
-                    description={
-                        <PolicySubmitResultDetails
-                            msg={'Policy updated successfully'}
-                            uuid={currentPolicyService === undefined ? '' : currentPolicyService.userPolicyId}
-                        />
-                    }
+                    description={<UserPolicySubmitResultDetails msg={'Policy deleted successfully'} uuid={id} />}
                     showIcon
                     closable={true}
+                    onClose={onClose}
                     type={'success'}
                 />{' '}
             </div>

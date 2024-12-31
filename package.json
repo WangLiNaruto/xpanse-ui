@@ -6,19 +6,19 @@
     "dependencies": {
         "@ant-design/icons": "^5.5.2",
         "@axa-fr/react-oidc": "^7.23.1",
-        "@tanstack/react-query": "^5.62.7",
+        "@tanstack/react-query": "^5.62.9",
         "antd": "^5.22.5",
         "echarts": "5.5.1",
         "echarts-for-react": "^3.0.2",
         "rc-field-form": "^2.6.0",
         "rc-menu": "^9.16.0",
-        "rc-tabs": "^15.4.0",
+        "rc-tabs": "^15.5.0",
         "react": "^18.2.0",
         "react-dom": "^18.3.1",
-        "react-router-dom": "^7.0.2",
+        "react-router-dom": "^7.1.1",
         "react-timer-hook": "^3.0.8",
         "yaml": "^2.6.1",
-        "zustand": "^5.0.1"
+        "zustand": "^5.0.2"
     },
     "scripts": {
         "start": "vite --port 3000",
@@ -49,17 +49,17 @@
         "@hey-api/openapi-ts": "^0.60.0",
         "playwright-core": "^1.49.1",
         "@playwright/test": "^1.49.1",
-        "@tanstack/eslint-plugin-query": "^5.62.1",
+        "@tanstack/eslint-plugin-query": "^5.62.9",
         "@types/react": "^18.3.12",
         "@types/react-dom": "^18.3.1",
         "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.18.1",
-        "@typescript-eslint/parser": "^8.18.1",
+        "@typescript-eslint/eslint-plugin": "^8.18.2",
+        "@typescript-eslint/parser": "^8.18.2",
         "@vitejs/plugin-react": "^4.3.4",
         "env-cmd": "^10.1.0",
         "eslint": "^9.17.0",
         "eslint-config-prettier": "^9.0.0",
-        "eslint-import-resolver-typescript": "^3.6.3",
+        "eslint-import-resolver-typescript": "^3.7.0",
         "eslint-plugin-css-modules": "^2.12.0",
         "eslint-plugin-import": "^2.31.0",
         "eslint-plugin-prettier": "^5.2.1",
@@ -72,8 +72,8 @@
         "release-it": "^17.10.0",
         "typescript": "5.7.2",
         "uuid": "^11.0.3",
-        "vite": "^6.0.3",
-        "typescript-eslint": "^8.18.1"
+        "vite": "^6.0.5",
+        "typescript-eslint": "^8.18.2"
     },
     "overrides": {
         "react-scripts": {
