@@ -4,11 +4,10 @@
  */
 
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Button, Col, Form, Input, Row, Tooltip, Typography } from 'antd';
+import { Button, Col, Form, Input, Row, Tooltip } from 'antd';
 import React, { useRef, useState } from 'react';
 import { Navigate, To, useLocation, useNavigate } from 'react-router-dom';
 import { v4 } from 'uuid';
-import appStyles from '../../../../styles/app.module.css';
 import serviceOrderStyles from '../../../../styles/service-order.module.css';
 import tableStyles from '../../../../styles/table.module.css';
 import { DeployRequest, taskStatus } from '../../../../xpanse-api/generated';
@@ -18,30 +17,26 @@ import {
     homePageRoute,
     servicesSubPageRoute,
 } from '../../../utils/constants';
-import { ApiDoc } from '../../common/doc/ApiDoc';
 import { isHandleKnownErrorResponse } from '../../common/error/isHandleKnownErrorResponse.ts';
-import { ContactDetailsShowType } from '../../common/ocl/ContactDetailsShowType.ts';
-import { ContactDetailsText } from '../../common/ocl/ContactDetailsText.tsx';
 import { useLatestServiceOrderStatusQuery } from '../../common/queries/useLatestServiceOrderStatusQuery.ts';
-import { useServiceDetailsByServiceIdQuery } from '../../common/queries/useServiceDetailsByServiceIdQuery.ts';
 import { EulaInfo } from '../common/EulaInfo';
-import { IsvNameDisplay } from '../common/IsvNameDisplay.tsx';
 import { OrderItem } from '../common/utils/OrderItem';
 import { OrderSubmitProps } from '../common/utils/OrderSubmitProps';
 import OrderSubmitStatusAlert from '../orderStatus/OrderSubmitStatusAlert';
+import userOrderableServicesQuery from '../query/userOrderableServicesQuery.ts';
 import useRedeployFailedDeploymentQuery from '../retryDeployment/useRedeployFailedDeploymentQuery';
 import { useOrderFormStore } from '../store/OrderFormStore';
 import NavigateOrderSubmission from './NavigateOrderSubmission';
+import { NewOrderHeaderElements } from './NewOrderHeaderElements.tsx';
 import { useDeployRequestSubmitQuery } from './useDeployRequestSubmitQuery';
 
 function OrderSubmit(state: OrderSubmitProps): React.JSX.Element {
-    const { Paragraph } = Typography;
     const [form] = Form.useForm();
     const [isEulaAccepted, setIsEulaAccepted] = useState<boolean>(false);
     const [isShowDeploymentResult, setIsShowDeploymentResult] = useState<boolean>(false);
     const uniqueRequestId = useRef(v4());
     const submitDeploymentRequest = useDeployRequestSubmitQuery();
-    const redeployFailedDeploymentQuery = useRedeployFailedDeploymentQuery();
+    const redeployFailedDeploymentQuery = useRedeployFailedDeploymentQuery(state.serviceHostingType);
     const getSubmitLatestServiceOrderStatusQuery = useLatestServiceOrderStatusQuery(
         redeployFailedDeploymentQuery.isSuccess
             ? redeployFailedDeploymentQuery.data.orderId
@@ -50,11 +45,7 @@ function OrderSubmit(state: OrderSubmitProps): React.JSX.Element {
         [taskStatus.SUCCESSFUL, taskStatus.FAILED]
     );
 
-    const getServiceDetailsByIdQuery = useServiceDetailsByServiceIdQuery(
-        submitDeploymentRequest.data?.serviceId ?? '',
-        state.serviceHostingType,
-        getSubmitLatestServiceOrderStatusQuery.data?.taskStatus
-    );
+    const orderableServicesQuery = userOrderableServicesQuery(state.category, state.name);
 
     const [cacheFormVariable] = useOrderFormStore((state) => [state.addDeployVariable]);
 
@@ -113,10 +104,10 @@ function OrderSubmit(state: OrderSubmitProps): React.JSX.Element {
     };
 
     const createServicePageUrl: string = createServicePageRoute
-        .concat('?catalog=', state.category)
-        .concat('&serviceName=', state.name)
+        .concat('?serviceName=', state.name)
         .concat('&latestVersion=', state.version)
-        .concat('&billingMode=', state.billingMode);
+        .concat('&billingMode=', state.billingMode)
+        .concat('#', state.category);
 
     const isBackDisabled = () => {
         if (submitDeploymentRequest.isPending || redeployFailedDeploymentQuery.isPending) {
@@ -192,45 +183,22 @@ function OrderSubmit(state: OrderSubmitProps): React.JSX.Element {
         <>
             <div>
                 <div className={tableStyles.genericTableContainer}>
-                    <Row justify='space-between'>
-                        <Col span={6}>
-                            <Tooltip placement='topLeft' title={state.name + '@' + state.version}>
-                                <Paragraph ellipsis={true} className={appStyles.contentTitle}>
-                                    Service: {state.name + '@' + state.version}
-                                </Paragraph>
-                            </Tooltip>
-                        </Col>
-                        <Col span={8}>
-                            <div className={serviceOrderStyles.serviceVendorContactClass}>
-                                <div className={serviceOrderStyles.serviceOrderSubmitApiDocClass}>
-                                    <ApiDoc
-                                        serviceTemplateId={state.id}
-                                        styleClass={serviceOrderStyles.contentTitleApi}
-                                    ></ApiDoc>
-                                </div>
-                                <div className={serviceOrderStyles.serviceOrderSubmitOptionVendor}>
-                                    <IsvNameDisplay serviceVendor={state.serviceVendor} />
-                                </div>
-                                {state.contactServiceDetails ? (
-                                    <div className={serviceOrderStyles.serviceApiDocVendorClass}>
-                                        <ContactDetailsText
-                                            serviceProviderContactDetails={state.contactServiceDetails}
-                                            showFor={ContactDetailsShowType.Order}
-                                        />
-                                    </div>
-                                ) : null}
-                            </div>
-                        </Col>
-                    </Row>
+                    <NewOrderHeaderElements
+                        title={state.name}
+                        version={state.version}
+                        icon={orderableServicesQuery.isSuccess ? orderableServicesQuery.data[0].icon : ''}
+                        id={state.id}
+                        serviceVendor={state.serviceVendor}
+                        contactServiceDetails={state.contactServiceDetails}
+                    />
                     {isShowDeploymentResult ? (
                         <OrderSubmitStatusAlert
                             key={uniqueRequestId.current}
-                            uuid={submitDeploymentRequest.data?.serviceId ?? ''}
+                            serviceId={submitDeploymentRequest.data?.serviceId ?? ''}
                             serviceHostType={state.serviceHostingType}
                             submitDeploymentRequest={submitDeploymentRequest}
                             redeployFailedDeploymentQuery={redeployFailedDeploymentQuery}
                             getSubmitLatestServiceOrderStatusQuery={getSubmitLatestServiceOrderStatusQuery}
-                            deployedServiceDetails={getServiceDetailsByIdQuery.data}
                             serviceProviderContactDetails={state.contactServiceDetails}
                             retryRequest={retryRequest}
                             onClose={onClose}

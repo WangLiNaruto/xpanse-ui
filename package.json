@@ -1,24 +1,24 @@
 {
     "name": "xpanse-ui",
-    "version": "1.0.19",
+    "version": "1.0.23",
     "private": true,
     "type": "module",
     "dependencies": {
-        "@ant-design/icons": "^5.5.2",
-        "@axa-fr/react-oidc": "^7.24.1",
-        "@tanstack/react-query": "^5.64.1",
-        "antd": "^5.23.0",
+        "@ant-design/icons": "^5.6.1",
+        "@axa-fr/react-oidc": "^7.25.3",
+        "@tanstack/react-query": "^5.66.5",
+        "antd": "^5.24.1",
         "echarts": "5.6.0",
         "echarts-for-react": "^3.0.2",
         "rc-field-form": "^2.6.0",
         "rc-menu": "^9.16.0",
-        "rc-tabs": "^15.5.0",
-        "react": "^18.2.0",
-        "react-dom": "^18.3.1",
-        "react-router-dom": "^7.1.1",
+        "rc-tabs": "^15.5.1",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-router-dom": "^7.1.5",
         "react-timer-hook": "^3.0.8",
         "yaml": "^2.6.1",
-        "zustand": "^5.0.2"
+        "zustand": "^5.0.3"
     },
     "scripts": {
         "start": "vite --port 3000",
@@ -42,42 +42,43 @@
         ]
     },
     "devDependencies": {
+        "@ant-design/v5-patch-for-react-19": "^1.0.3",
         "@axa-fr/oidc-client": "^7.22.32",
-        "@eslint/compat": "^1.2.4",
+        "@eslint/compat": "^1.2.6",
         "@eslint/eslintrc": "^3.2.0",
-        "@eslint/js": "^9.18.0",
-        "@hey-api/openapi-ts": "^0.61.3",
-        "playwright-core": "^1.49.1",
-        "@playwright/test": "^1.49.1",
-        "@tanstack/eslint-plugin-query": "^5.62.16",
-        "@types/react": "^18.3.12",
-        "@types/react-dom": "^18.3.1",
+        "@eslint/js": "^9.20.0",
+        "@hey-api/openapi-ts": "^0.64.4",
+        "@playwright/test": "^1.50.1",
+        "@tanstack/eslint-plugin-query": "^5.66.1",
+        "@types/react": "^19.0.10",
+        "@types/react-dom": "^19.0.4",
         "@types/uuid": "^10.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.20.0",
-        "@typescript-eslint/parser": "^8.20.0",
+        "@typescript-eslint/eslint-plugin": "^8.24.1",
+        "@typescript-eslint/parser": "^8.24.1",
         "@vitejs/plugin-react": "^4.3.4",
         "env-cmd": "^10.1.0",
-        "eslint": "^9.18.0",
+        "eslint": "^9.20.0",
         "eslint-config-prettier": "^10.0.1",
-        "eslint-import-resolver-typescript": "^3.7.0",
+        "eslint-import-resolver-typescript": "^3.8.1",
         "eslint-plugin-css-modules": "^2.12.0",
         "eslint-plugin-import": "^2.31.0",
-        "eslint-plugin-prettier": "^5.2.1",
-        "eslint-plugin-react": "^7.37.3",
+        "eslint-plugin-prettier": "^5.2.3",
+        "eslint-plugin-react": "^7.37.4",
         "eslint-plugin-react-hooks": "^5.1.0",
         "eslint-plugin-require-explicit-generics": "^1.0.0",
-        "knip": "^5.42.0",
-        "prettier": "3.4.2",
+        "knip": "^5.44.1",
+        "playwright-core": "^1.50.1",
+        "prettier": "3.5.0",
         "prettier-plugin-organize-imports": "^4.1.0",
-        "release-it": "^18.1.1",
+        "release-it": "^18.1.2",
         "typescript": "5.7.3",
-        "uuid": "^11.0.3",
-        "vite": "^6.0.7",
-        "typescript-eslint": "^8.20.0"
+        "typescript-eslint": "^8.24.1",
+        "uuid": "^11.0.5",
+        "vite": "^6.1.0"
     },
     "overrides": {
-        "react-scripts": {
-            "typescript": "^5"
+        "zustand": {
+            "use-sync-external-store": "^1.4.0"
         }
     },
     "knip": {
@@ -98,9 +99,6 @@
             "@typescript-eslint/parser",
             "eslint-config-prettier",
             "eslint-plugin-prettier"
-        ],
-        "ignoreBinaries": [
-            "zip"
         ],
         "eslint": {
             "config": [

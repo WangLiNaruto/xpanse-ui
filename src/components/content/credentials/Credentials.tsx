@@ -14,7 +14,6 @@ import { useMutation } from '@tanstack/react-query';
 import { Button, Image, Modal, Popconfirm, Space, Table } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { useState } from 'react';
-import { v4 } from 'uuid';
 import tableButtonStyles from '../../../styles/table-buttons.module.css';
 import tableStyles from '../../../styles/table.module.css';
 import {
@@ -25,15 +24,14 @@ import {
     DeleteIsvCloudCredentialData,
     deleteUserCloudCredential,
     DeleteUserCloudCredentialData,
-    ErrorResponse,
     name,
 } from '../../../xpanse-api/generated';
 import { useCurrentUserRoleStore } from '../../layouts/header/useCurrentRoleStore';
 import { cspMap } from '../common/csp/CspLogo';
-import { isHandleKnownErrorResponse } from '../common/error/isHandleKnownErrorResponse.ts';
 import AddCredential from './AddCredential';
 import CredentialDetails from './CredentialDetails';
-import { CredentialTip } from './CredentialTip';
+import CredentialListStatus from './CredentialListStatus.tsx';
+import CredentialProcessStatus from './CredentialProcessStatus.tsx';
 import UpdateCredential from './UpdateCredential';
 import useCredentialsListQuery from './query/queryCredentialsList';
 
@@ -41,8 +39,7 @@ function Credentials(): React.JSX.Element {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isUpdateOpen, setIsUpdateOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-    let tipMessage: string = '';
-    let tipType: 'error' | 'success' | undefined = undefined;
+
     let abstractCredentialInfoList: AbstractCredentialInfo[] = [];
     const [activeCredential, setActiveCredential] = useState<CredentialVariables | undefined>(undefined);
     const currentRole: string | undefined = useCurrentUserRoleStore((state) => state.currentUserRole);
@@ -58,34 +55,8 @@ function Credentials(): React.JSX.Element {
         }
     }
 
-    if (credentialsQuery.isError) {
-        if (isHandleKnownErrorResponse(credentialsQuery.error)) {
-            const response: ErrorResponse = credentialsQuery.error.body;
-            tipType = 'error';
-            tipMessage = response.details.join();
-        } else {
-            tipType = 'error';
-            tipMessage = credentialsQuery.error.message;
-        }
-    }
-
     const deleteCredentialRequest = useMutation({
         mutationFn: (credentialVariables: CredentialVariables) => deleteCredentialByRole(credentialVariables),
-        onSuccess: () => {
-            tipType = 'success';
-            tipMessage = 'Deleting Credentials Successful.';
-            void credentialsQuery.refetch();
-        },
-        onError: (error: Error) => {
-            if (isHandleKnownErrorResponse(error)) {
-                const response: ErrorResponse = error.body;
-                tipType = 'error';
-                tipMessage = response.details.join();
-            } else {
-                tipType = 'error';
-                tipMessage = error.message;
-            }
-        },
     });
 
     const deleteCredentialByRole = (credentialVariables: CredentialVariables) => {
@@ -220,14 +191,23 @@ function Credentials(): React.JSX.Element {
         setIsDetailsOpen(false);
     };
 
-    const onRemove = () => {
-        tipMessage = '';
-        tipType = undefined;
+    const getCloseStatus = (isClose: boolean) => {
+        if (isClose) {
+            void credentialsQuery.refetch();
+        }
     };
 
     return (
         <div className={tableStyles.genericTableContainer}>
-            <CredentialTip key={v4().toString()} type={tipType} msg={tipMessage} onRemove={onRemove}></CredentialTip>
+            {deleteCredentialRequest.isSuccess || deleteCredentialRequest.isError ? (
+                <CredentialProcessStatus
+                    isError={deleteCredentialRequest.isError}
+                    isSuccess={deleteCredentialRequest.isSuccess}
+                    successMsg={'Deleting Credentials Successful.'}
+                    error={deleteCredentialRequest.error}
+                    getCloseStatus={getCloseStatus}
+                />
+            ) : null}
             <div>
                 {/* this condition will unmount and mount the modal completely. So that the old values are not retained. */}
                 {isAddOpen ? (
@@ -276,6 +256,7 @@ function Credentials(): React.JSX.Element {
                     ) : null}
                 </Modal>
             </div>
+            {credentialsQuery.isError ? <CredentialListStatus error={credentialsQuery.error} /> : <></>}
             <div>
                 <div className={tableButtonStyles.tableManageButtons}>
                     <Button

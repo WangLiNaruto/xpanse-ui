@@ -3,7 +3,7 @@
  * SPDX-FileCopyrightText: Huawei Inc.
  */
 
-import { Button, Col, Form, Row, Tabs, Tooltip, Typography } from 'antd';
+import { Button, Col, Form, Row, Tabs } from 'antd';
 import { Tab } from 'rc-tabs/lib/interface';
 import React, { useEffect, useMemo, useState } from 'react';
 import { To, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -21,12 +21,8 @@ import {
     UserOrderableServiceVo,
 } from '../../../../xpanse-api/generated';
 import { orderPageRoute, servicesSubPageRoute } from '../../../utils/constants';
-import { ApiDoc } from '../../common/doc/ApiDoc.tsx';
-import { ContactDetailsShowType } from '../../common/ocl/ContactDetailsShowType';
-import { ContactDetailsText } from '../../common/ocl/ContactDetailsText';
 import { BillingModeSelection } from '../common/BillingModeSelection';
 import { FlavorSelection } from '../common/FlavorSelection.tsx';
-import { IsvNameDisplay } from '../common/IsvNameDisplay.tsx';
 import { RegionSelection } from '../common/RegionSelection.tsx';
 import { ServiceHostingSelection } from '../common/ServiceHostingSelection';
 import { AvailabilityZoneFormItem } from '../common/availabilityzone/AvailabilityZoneFormItem';
@@ -49,16 +45,16 @@ import CspSelect from '../formElements/CspSelect';
 import VersionSelect from '../formElements/VersionSelect';
 import { RegionDropDownInfo } from '../types/RegionDropDownInfo';
 import NavigateOrderSubmission from './NavigateOrderSubmission';
+import { NewOrderHeaderElements } from './NewOrderHeaderElements.tsx';
 
 export function SelectServiceForm({ services }: { services: UserOrderableServiceVo[] }): React.JSX.Element {
-    const { Paragraph } = Typography;
     const [form] = Form.useForm();
     const [urlParams] = useSearchParams();
     const location = useLocation();
     const navigate = useNavigate();
     const latestVersion = decodeURI(urlParams.get('latestVersion') ?? '');
     const serviceName = decodeURI(urlParams.get('serviceName') ?? '');
-    const categoryName: string = location.hash.split('#')[1];
+    const categoryName = location.hash.split('#')[1];
     const servicePageUrl = servicesSubPageRoute + categoryName;
     let serviceInfo: OrderSubmitProps | undefined;
     const versionToServicesMap = useMemo<Map<string, UserOrderableServiceVo[]>>(() => {
@@ -147,11 +143,7 @@ export function SelectServiceForm({ services }: { services: UserOrderableService
     const [selectBillingMode, setSelectBillMode] = useState<billingMode>(
         serviceInfo
             ? serviceInfo.billingMode
-            : defaultBillingMode
-              ? defaultBillingMode
-              : billingModes
-                ? billingModes[0]
-                : billingMode.FIXED
+            : (defaultBillingMode ?? (billingModes ? billingModes[0] : billingMode.FIXED))
     );
 
     let currentServiceProviderContactDetails: ServiceProviderContactDetails | undefined =
@@ -208,7 +200,7 @@ export function SelectServiceForm({ services }: { services: UserOrderableService
             serviceHostingType,
             versionToServicesMap.get(selectVersion)
         );
-        setSelectBillMode(defaultBillingMode ? defaultBillingMode : billingModes ? billingModes[0] : billingMode.FIXED);
+        setSelectBillMode(defaultBillingMode ?? (billingModes ? billingModes[0] : billingMode.FIXED));
 
         flavorList = getServiceFlavorList(selectCsp, serviceHostingType, versionToServicesMap.get(selectVersion));
         setSelectFlavor(flavorList[0]?.name ?? '');
@@ -260,7 +252,7 @@ export function SelectServiceForm({ services }: { services: UserOrderableService
         setServiceVendor(
             serviceVendorHelper(cspList[0], serviceHostTypes[0], versionToServicesMap.get(currentVersion))
         );
-        setSelectBillMode(defaultBillingMode ? defaultBillingMode : billingModes ? billingModes[0] : billingMode.FIXED);
+        setSelectBillMode(defaultBillingMode ?? (billingModes ? billingModes[0] : billingMode.FIXED));
     };
 
     const onChangeCloudProvider = (csp: csp) => {
@@ -284,7 +276,7 @@ export function SelectServiceForm({ services }: { services: UserOrderableService
 
         billingModes = getBillingModes(csp, serviceHostTypes[0], versionToServicesMap.get(selectVersion));
         defaultBillingMode = getDefaultBillingMode(csp, serviceHostTypes[0], versionToServicesMap.get(selectVersion));
-        setSelectBillMode(defaultBillingMode ? defaultBillingMode : billingModes ? billingModes[0] : billingMode.FIXED);
+        setSelectBillMode(defaultBillingMode ?? (billingModes ? billingModes[0] : billingMode.FIXED));
 
         flavorList = getServiceFlavorList(csp, serviceHostTypes[0], versionToServicesMap.get(selectVersion));
         setSelectFlavor(flavorList[0]?.name ?? '');
@@ -356,39 +348,15 @@ export function SelectServiceForm({ services }: { services: UserOrderableService
                 className={serviceOrderStyles.orderFormInlineDisplay}
             >
                 <div className={tableStyles.genericTableContainer}>
-                    <Row justify='space-between'>
-                        <Col span={6}>
-                            <Tooltip placement='topLeft' title={serviceName}>
-                                <Paragraph ellipsis={true} className={appStyles.contentTitle}>
-                                    Service: {serviceName}
-                                </Paragraph>
-                            </Tooltip>
-                        </Col>
-                        {currentServiceProviderContactDetails !== undefined ? (
-                            <Col span={8}>
-                                <div className={serviceOrderStyles.serviceVendorContactClass}>
-                                    <div className={serviceOrderStyles.serviceApiDocClass}>
-                                        <ApiDoc
-                                            serviceTemplateId={getServiceTemplateId()}
-                                            styleClass={serviceOrderStyles.contentTitleApi}
-                                        ></ApiDoc>
-                                    </div>
-                                    <div className={serviceOrderStyles.serviceOrderTypeOptionVendor}>
-                                        <IsvNameDisplay serviceVendor={serviceVendor} />
-                                    </div>
-                                    <div>
-                                        {' '}
-                                        <ContactDetailsText
-                                            serviceProviderContactDetails={currentServiceProviderContactDetails}
-                                            showFor={ContactDetailsShowType.Order}
-                                        />
-                                    </div>
-                                </div>
-                            </Col>
-                        ) : (
-                            <></>
-                        )}
-                    </Row>
+                    <NewOrderHeaderElements
+                        title={serviceName}
+                        version={selectVersion}
+                        icon={services[0].icon}
+                        id={getServiceTemplateId()}
+                        serviceVendor={serviceVendor}
+                        contactServiceDetails={currentServiceProviderContactDetails}
+                    />
+
                     <div className={serviceOrderStyles.orderFormGroupItems}>
                         <VersionSelect
                             selectVersion={selectVersion}

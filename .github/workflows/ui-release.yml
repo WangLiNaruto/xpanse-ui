@@ -48,7 +48,7 @@ jobs:
 
             - name: Run EsLint
               working-directory: ./
-              run: npx eslint . --ext .js,.jsx,.ts,.tsx --config package.json --max-warnings=0
+              run: npx eslint . --max-warnings=0
 
             - name: Check Prettier Format
               working-directory: ./
@@ -57,10 +57,6 @@ jobs:
             - name: Run knip
               working-directory: ./
               run: npx knip
-
-            - name: Run unit tests
-              working-directory: ./
-              run: npm run test
 
             - name: Run TSC
               working-directory: ./
@@ -95,7 +91,7 @@ jobs:
                   images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
             - name: Build Docker Image and Push
-              uses: docker/build-push-action@v6.10.0
+              uses: docker/build-push-action@v6.13.0
               with:
                   context: .
                   file: docker/Dockerfile

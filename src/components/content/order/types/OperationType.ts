@@ -4,7 +4,9 @@
  */
 
 export enum OperationType {
-    Deploy = 'deploy',
-    Destroy = 'destroy',
-    Modify = 'modify',
+    Deploy,
+    Destroy,
+    Modify,
+    Recreate,
+    Port,
 }
